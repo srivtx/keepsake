@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory packs — keepsake</title>
+<meta name="description" content="What a keepsake memory pack is: a lossless, plaintext, re-importable Markdown projection of a vault's cells, the keepsake pack and keepsake unpack lifecycle, the exact pack format, and what is and is not preserved.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Memory packs — keepsake">
+<meta property="og:description" content="A memory pack is a lossless, plaintext, re-importable Markdown projection of a vault's cells. Not encrypted.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/packs.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Memory packs — keepsake">
+<meta name="twitter:description" content="What a keepsake memory pack is, how pack and unpack work, and what it preserves.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/packs.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'7'%20fill%3D'%23c026d3'%2F%3E%3Cg%20transform%3D'translate(4%204)'%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%20%3Crect%20x%3D%224.6%22%20y%3D%224.6%22%20width%3D%2214.8%22%20height%3D%2214.8%22%20rx%3D%222.6%22%3E%3C%2Frect%3E%20%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.4%22%3E%3C%2Fcircle%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24" focusable="false"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="2.6"></rect> <circle cx="12" cy="12" r="3.4"></circle></svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">by svx</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="packs.html" aria-current="page">Memory packs</a></li>
+          <li><a href="architecture.html">Architecture</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Interchange</p>
+          <h1>Memory packs</h1>
+          <p>A memory pack is a plaintext, human- and agent-readable Markdown rendering of a vault's cells. It is the second projection of the same data: the <code>.keepsake</code> vault is the encrypted, on-disk container, and the pack is the lossless interchange file you hand to a tool that cannot open one.</p>
+        </div>
+
+        <h2>What a pack is</h2>
+        <p>A vault (<code>keepsake/v1</code>) is one JSON file that holds the cells sealed with AES-256-GCM under a PBKDF2-SHA256 key. To read it, a tool must implement that container. A memory pack removes that requirement: <code>keepsake pack</code> decrypts a vault and writes a single Markdown document that carries the exact same cells. The spec describes a pack as a <strong>transport projection, not a vault</strong>.</p>
+        <p>The pack is lossless with respect to the cells. Every cell's <code>id</code>, <code>text</code>, <code>source</code>, <code>role</code>, <code>createdAt</code>, <code>tags</code>, and <code>hash</code> is written into a fenced JSON block as the cell array's canonical JSON, and the whole set is committed by a Merkle root recorded in the front matter. Importing a pack reconstructs the cells byte-for-byte; re-sealing them produces a vault with the same hashes and root.</p>
+
+        <div class="callout" role="note">
+          <p><span class="chip chip--warning">Plaintext</span> A memory pack is <strong>not encrypted</strong>. It exists so a human or an LLM can read it and so any tool can move it, which means anyone who has the file can read every cell. Share a pack only where that is intended, and encrypt or omit sensitive cells first.</p>
+        </div>
+
+        <h2>Why it exists</h2>
+        <p>The vault is the safe copy; the pack is the portable one. A pack lets you:</p>
+        <ul>
+          <li>Read your memory without any keepsake tooling, because it is Markdown plus one JSON array.</li>
+          <li>Hand the memory to an agent or a service that can read text but cannot open an encrypted container.</li>
+          <li>Move memory into another implementation of the format, or into a different tool entirely.</li>
+          <li>Prove integrity after the move: the pack carries the per-cell hashes and the Merkle root, and <code>keepsake unpack</code> verifies both before it seals.</li>
+        </ul>
+        <p>The pack is distinct from the encrypted vault and from a <a href="usage.html">context pack</a>. A context pack is a transient, token-budgeted digest printed for one task and never stored; a memory pack is a complete, persisted, re-importable copy of every cell.</p>
+
+        <h2>Lifecycle</h2>
+        <p>Two commands move data between the two projections. Both read the passphrase from <code>KEEPSAKE_PASSPHRASE</code>; neither takes it on the command line.</p>
+        <div class="term" aria-label="Pack and unpack commands">
+          <div class="term__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term__title">pack / unpack</span>
+          </div>
+          <pre class="term__body term__body--wrap"><span class="ln"><span class="dim"># decrypt a vault into a plaintext memory pack</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake pack --vault memory.keepsake --out memory.md</span></span><span class="ln"></span><span class="ln"><span class="dim"># verify the pack's hashes and Merkle root, then seal a new vault</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake unpack memory.md --out restored.keepsake</span></span></pre>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <caption>What each command does.</caption>
+            <thead>
+              <tr><th scope="col">Command</th><th scope="col">Behaviour</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>keepsake pack</code></td><td>Opens <code>--vault</code> with the passphrase, sorts the cells by <code>createdAt</code> then <code>id</code>, and writes the pack. <code>--out</code> defaults to <code>memory-pack.md</code>. Prints <code>packed N cell(s) into OUT (plaintext, not encrypted)</code>.</td></tr>
+              <tr><td><code>keepsake unpack &lt;pack.md&gt;</code></td><td>Parses the pack, recomputes every cell hash and the Merkle root, and compares the root against the value recorded in the front matter. If both match, it seals the cells into a new vault with a fresh salt and IV. <code>--out</code> defaults to <code>keepsake.keepsake</code>. Exits <code>1</code> if the pack does not verify.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Verification is mandatory, not advisory. The spec requires an implementation to verify a pack's per-cell hashes and Merkle root before importing it, and to reject a pack that does not verify. A tampered data block, a wrong root, missing data markers, or invalid JSON all fail with the same message: <code>keepsake: not a memory pack or the pack is corrupt</code>.</p>
+
+        <h2>The pack format</h2>
+        <p>A pack is one Markdown document in four parts, in order:</p>
+        <ol>
+          <li><strong>Front matter.</strong> A YAML-style block delimited by <code>---</code>, with the keys <code>keepsake</code>, <code>kind</code>, <code>createdAt</code>, <code>cells</code>, and <code>merkle</code>.</li>
+          <li><strong>A human list.</strong> The heading <code># keepsake memory pack</code>, a one-line description, then one numbered line per cell: <code>N. [source · role · createdAt] text</code>. Newlines inside a cell's text are collapsed to spaces so each memory stays on one line.</li>
+          <li><strong>The data block.</strong> The canonical JSON of the full cells array, fenced as <code>json</code> and wrapped in the markers <code>&lt;!-- keepsake:data --&gt;</code> and <code>&lt;!-- /keepsake:data --&gt;</code>. This is the lossless payload <code>unpack</code> reads.</li>
+          <li><strong>A closing line.</strong> A sentence restating the Merkle root and the fact that the file is not encrypted.</li>
+        </ol>
+        <p>Here is a real pack produced from three cells, reproduced exactly. The hashes and root are deterministic; only <code>createdAt</code> reflects the moment the pack was written.</p>
+        <pre class="code code--wrap">---
+keepsake: keepsake/v1
+kind: memory-pack
+createdAt: 2026-09-20T15:33:45.128Z
+cells: 3
+merkle: 54403841eec9ebc89ab27e796bea5a866cf44f9e99f496c0b653f149e70bbf6d
+---
+
+# keepsake memory pack
+
+This file is a lossless, re-importable copy of your memory: every cell can be imported back without losing a byte. It is plaintext and not encrypted.
+
+1. [notes · note · 2026-01-01T00:00:00.000Z] first memory
+2. [chat · user · 2026-01-02T00:00:00.000Z] second memory
+3. [json · assistant · 2026-01-03T00:00:00.000Z] third memory
+
+&lt;!-- keepsake:data --&gt;
+```json
+[{"createdAt":"2026-01-01T00:00:00.000Z","hash":"61af453b2f8bd5500014c983161986d781a29607da3faf305cfe5accb372b269","id":"a","role":"note","source":"notes","tags":[],"text":"first\nmemory"},{"createdAt":"2026-01-02T00:00:00.000Z","hash":"42a4548b4dfad53bcfa54bbebcdf276708c24b4ef2d62caecf9aa40b30620d62","id":"b","role":"user","source":"chat","tags":[],"text":"second memory"},{"createdAt":"2026-01-03T00:00:00.000Z","hash":"2af3de1f1858e0a521bb0d56855a5a574248212109b4e2e50b6897250ef9400f","id":"c","role":"assistant","source":"json","tags":[],"text":"third memory"}]
+```
+&lt;!-- /keepsake:data --&gt;
+
+The Merkle root of these cells is 54403841eec9ebc89ab27e796bea5a866cf44f9e99f496c0b653f149e70bbf6d. This file is safe to paste anywhere, but it is not encrypted: anyone who has the file can read it.</pre>
+        <p>Two details matter for round-tripping. First, the JSON is canonical JSON: object keys are sorted recursively and there is no insignificant whitespace, so the same cells always produce the same block. Second, each cell in the block still carries its <code>hash</code> field, which is the SHA-256 of that cell's canonical payload, so a single altered byte in the block no longer matches its hash.</p>
+
+        <h2>What is preserved</h2>
+        <p>A pack carries the cells and the integrity data needed to trust them. It does not carry the container, the key, or anything the format never stored.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>Preserved in a pack versus not.</caption>
+            <thead>
+              <tr><th scope="col">Preserved</th><th scope="col">Not preserved</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Every cell: <code>id</code>, <code>text</code>, <code>source</code>, <code>role</code>, <code>createdAt</code>, and <code>tags</code>.</td><td>Confidentiality. The pack is plaintext Markdown; there is no encryption anywhere in it.</td></tr>
+              <tr><td>Each cell's <code>hash</code>, the SHA-256 of its canonical payload.</td><td>Embedding vectors. The format stores no embeddings, so none are in the vault or the pack.</td></tr>
+              <tr><td>The Merkle root over the cells, recorded in the front matter and re-checked on import.</td><td>The vault container fields: the KDF parameters and salt, the cipher IV, the ciphertext, and the vault's own <code>createdAt</code>.</td></tr>
+              <tr><td>The full cells array as canonical JSON, in the data block.</td><td>Attachments, images, and tool calls. Import records text and metadata by design, and the pack inherits that.</td></tr>
+              <tr><td>A human-readable numbered list of every memory, for reading without tooling.</td><td>Any key material or recovery path. There is no passphrase, escrow, or key in a pack.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Trust model</h2>
+        <p>A pack is integrity-checked, not confidential. Its hashes and Merkle root detect any change to the plaintext, and <code>unpack</code> refuses a pack that does not verify, but they are not a signature: anyone who can edit the file can also edit the hashes and recompute the root. Use a pack to move and read memory, and keep the encrypted <code>.keepsake</code> vault as the copy you protect. See the <a href="spec.html">spec</a> for the normative rules and the <a href="usage.html">usage page</a> for the full command reference.</p>
+
+        <div class="docs__foot">
+          <a href="usage.html">← Usage</a>
+          <a href="architecture.html">Architecture →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="packs.html">Memory packs</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT Licensed · © 2026.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

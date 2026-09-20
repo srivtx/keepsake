@@ -16,3 +16,141 @@
     --accent-ink: #0a0a0a;
   }
 }
+
+/* ── Landing refinements ──
+   Per-page polish for index.html, built only from lens.css tokens so the
+   suite stays consistent. Numbered step cards, compact single-line fields,
+   and a finished playground header. */
+
+/* A single-line field: text/search/password/number/select at a normal
+   control height instead of the 260px textarea default. */
+.input--compact {
+  min-height: 0;
+  padding: 10px 14px;
+  line-height: 1.4;
+  resize: none;
+}
+
+select.input--compact {
+  padding-right: var(--s-6);
+}
+
+/* File pickers dress like the other fields. */
+.file-input {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--r-md);
+  background: var(--canvas);
+  color: var(--mute);
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.file-input::file-selector-button {
+  margin-right: var(--s-3);
+  padding: 4px 10px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 550;
+  cursor: pointer;
+}
+
+.file-input::file-selector-button:hover {
+  border-color: var(--ink);
+}
+
+/* Numbered step cards: one header rhythm and one vertical rhythm. */
+.card--step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+}
+
+.card--step .field {
+  margin-bottom: 0;
+}
+
+.card__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding-bottom: var(--s-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.card__step {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.card__head .card__title {
+  margin-bottom: 0;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+}
+
+/* A finished toolbar for the playground. */
+.playground__head--bar {
+  gap: var(--s-4);
+  background: var(--surface-2);
+}
+
+.playground__head--bar .eyebrow {
+  color: var(--ink);
+}
+
+/* Divider between the numbered steps and the results that follow. */
+.playground__divider {
+  margin: 0;
+}
+
+/* Breathing room among the result blocks. */
+.playground__results > * + * {
+  margin-top: var(--s-4);
+}
+
+@media (max-width: 520px) {
+  .playground__head--bar {
+    padding: var(--s-3) var(--s-4);
+  }
+
+  .playground__body {
+    padding: var(--s-4);
+  }
+
+  .playground__results {
+    padding: 0 var(--s-4) var(--s-4);
+  }
+}
+
+/* ── Brand mark ─────────────────────────────────────────────────────────── */
+.brand__mark {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+}
+
+.brand__mark .icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.4;
+}

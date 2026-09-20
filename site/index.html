@@ -21,7 +21,7 @@
 <meta name="twitter:description" content="Import a chat export or notes, search it locally, seal it into an encrypted .keepsake vault, and let any agent recall it over MCP.">
 <meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
 <link rel="canonical" href="https://srivtx.github.io/keepsake">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c026d3'/%3E%3Crect x='8.2' y='7.2' width='15.6' height='17.6' rx='3.2' fill='none' stroke='white' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='14' r='2.2' fill='white'/%3E%3Cpath d='M16 15.6V19' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'7'%20fill%3D'%23c026d3'%2F%3E%3Cg%20transform%3D'translate(4%204)'%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%20%3Crect%20x%3D%224.6%22%20y%3D%224.6%22%20width%3D%2214.8%22%20height%3D%2214.8%22%20rx%3D%222.6%22%3E%3C%2Frect%3E%20%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.4%22%3E%3C%2Fcircle%3E%3C%2Fg%3E%3C%2Fsvg%3E">
 <link rel="stylesheet" href="assets/lens.css">
 <link rel="stylesheet" href="assets/theme.css">
 <script>
@@ -48,14 +48,10 @@
   <div class="container nav__inner">
     <a class="brand" href="index.html" aria-label="keepsake home">
       <span class="brand__mark" aria-hidden="true">
-        <svg class="icon" viewBox="0 0 32 32" focusable="false">
-          <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
-          <circle cx="16" cy="14" r="2.6"></circle>
-          <path d="M16 16.3V20.5"></path>
-        </svg>
+        <svg class="icon" viewBox="0 0 24 24" focusable="false"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="2.6"></rect> <circle cx="12" cy="12" r="3.4"></circle></svg>
       </span>
       <span class="brand__name">keepsake</span>
-      <span class="brand__tag">portable AI memory</span>
+      <span class="brand__tag">by svx</span>
     </a>
 
     <nav class="nav__links" id="site-nav" aria-label="Sections">
@@ -136,7 +132,7 @@
           </noscript>
 
           <div class="playground">
-            <div class="playground__head">
+            <div class="playground__head playground__head--bar">
               <p class="eyebrow">Local only</p>
               <p class="playground__hint">Runs entirely in your browser. Nothing is uploaded.</p>
             </div>
@@ -144,8 +140,11 @@
             <div class="playground__body">
               <div class="grid grid--2">
 
-                <div class="card">
-                  <h3>1 · Import</h3>
+                <div class="card card--step">
+                  <div class="card__head">
+                    <span class="card__step" aria-hidden="true">1</span>
+                    <h3 class="card__title">Import</h3>
+                  </div>
                   <p class="muted">A chat export, a notes file, or a few lines. A ChatGPT <code>conversations.json</code> is recognized automatically. A <code>memory-pack.md</code> pack is verified against its hashes and Merkle root before its cells are imported.</p>
                   <label class="field" for="import-text">Memory text</label>
                   <textarea id="import-text" class="input" spellcheck="false">I want to move my chat history out of the cloud.
@@ -162,13 +161,16 @@ Ask about my grandmother's sourdough recipe.</textarea>
                   <p class="status" id="import-status" role="status" aria-live="polite">No cells imported yet.</p>
                 </div>
 
-                <div class="card">
-                  <h3>2 · Search</h3>
+                <div class="card card--step">
+                  <div class="card__head">
+                    <span class="card__step" aria-hidden="true">2</span>
+                    <h3 class="card__title">Search</h3>
+                  </div>
                   <p class="muted">Exact, lexical BM25 ranking by default, with optional on-device embeddings you can load in card 6. The <code>keepsake/v1</code> file itself stores no embeddings.</p>
                   <label class="field" for="search-query">Query</label>
-                  <input id="search-query" class="input" type="search" style="min-height:0;padding:10px 14px" placeholder="staging database" autocomplete="off">
+                  <input id="search-query" class="input input--compact" type="search" placeholder="staging database" autocomplete="off">
                   <label class="field" for="search-mode">Ranking mode</label>
-                  <select id="search-mode" class="input" style="min-height:0;padding:10px 14px">
+                  <select id="search-mode" class="input input--compact">
                     <option value="lexical">lexical — BM25 (default)</option>
                     <option value="semantic">semantic — embeddings</option>
                     <option value="hybrid">hybrid — BM25 + embeddings</option>
@@ -179,11 +181,14 @@ Ask about my grandmother's sourdough recipe.</textarea>
                   <p class="status" id="search-status" role="status" aria-live="polite">Import something, then search it.</p>
                 </div>
 
-                <div class="card">
-                  <h3>3 · Seal a vault</h3>
+                <div class="card card--step">
+                  <div class="card__head">
+                    <span class="card__step" aria-hidden="true">3</span>
+                    <h3 class="card__title">Seal a vault</h3>
+                  </div>
                   <p class="muted">AES-256-GCM under a PBKDF2-SHA256 key, then a download of <code>YYYY-MM-DD-keepsake.keepsake</code>. The passphrase is never stored.</p>
                   <label class="field" for="seal-pass">Passphrase</label>
-                  <input id="seal-pass" class="input" type="password" style="min-height:0;padding:10px 14px" autocomplete="new-password">
+                  <input id="seal-pass" class="input input--compact" type="password" autocomplete="new-password">
                   <div class="btn-row">
                     <button type="button" class="btn btn--primary" id="seal-run">Seal vault</button>
                   </div>
@@ -195,26 +200,32 @@ Ask about my grandmother's sourdough recipe.</textarea>
                   <p class="status" id="pack-status" role="status" aria-live="polite">No memory pack downloaded yet.</p>
                 </div>
 
-                <div class="card">
-                  <h3>4 · Open a vault</h3>
+                <div class="card card--step">
+                  <div class="card__head">
+                    <span class="card__step" aria-hidden="true">4</span>
+                    <h3 class="card__title">Open a vault</h3>
+                  </div>
                   <p class="muted">Pick a <code>.keepsake</code> file and its passphrase. A wrong passphrase fails the authentication tag and reports an error.</p>
                   <label class="field" for="open-file">.keepsake file</label>
                   <input id="open-file" class="file-input" type="file" accept=".keepsake,application/json">
                   <label class="field" for="open-pass">Passphrase</label>
-                  <input id="open-pass" class="input" type="password" style="min-height:0;padding:10px 14px" autocomplete="current-password">
+                  <input id="open-pass" class="input input--compact" type="password" autocomplete="current-password">
                   <div class="btn-row">
                     <button type="button" class="btn btn--primary" id="open-run">Open vault</button>
                   </div>
                   <p class="status" id="open-status" role="status" aria-live="polite">No vault opened.</p>
                 </div>
 
-                <div class="card">
-                  <h3>5 · Context pack</h3>
+                <div class="card card--step">
+                  <div class="card__head">
+                    <span class="card__step" aria-hidden="true">5</span>
+                    <h3 class="card__title">Context pack</h3>
+                  </div>
                   <p class="muted">A task-scoped, token-budgeted Markdown projection of the cells. Built in memory and never written to disk.</p>
                   <label class="field" for="context-task">Task</label>
-                  <input id="context-task" class="input" type="text" placeholder="what should the agent work on?" autocomplete="off">
+                  <input id="context-task" class="input input--compact" type="text" placeholder="what should the agent work on?" autocomplete="off">
                   <label class="field" for="context-budget">Token budget</label>
-                  <input id="context-budget" class="input" type="number" value="1500" min="100" max="20000" step="100">
+                  <input id="context-budget" class="input input--compact" type="number" value="1500" min="100" max="20000" step="100">
                   <div class="btn-row">
                     <button type="button" class="btn btn--primary" id="context-run">Build pack</button>
                   </div>
@@ -227,8 +238,11 @@ Ask about my grandmother's sourdough recipe.</textarea>
                   <p class="status" id="context-status" role="status" aria-live="polite">Import something, then build a pack.</p>
                 </div>
 
-                <div class="card">
-                  <h3>6 · Semantic recall</h3>
+                <div class="card card--step">
+                  <div class="card__head">
+                    <span class="card__step" aria-hidden="true">6</span>
+                    <h3 class="card__title">Semantic recall</h3>
+                  </div>
                   <p class="muted">Rank cells by meaning, not just exact words. The model is self-hosted on this site (about 23 MB, downloaded once), runs entirely in your browser, and no memory or query ever leaves the machine.</p>
                   <p class="field">On-device model</p>
                   <div class="btn-row">
@@ -240,6 +254,8 @@ Ask about my grandmother's sourdough recipe.</textarea>
 
               </div>
             </div>
+
+            <hr class="playground__divider">
 
             <div class="playground__results">
               <div class="callout" id="app-error" role="alert" hidden>
@@ -286,7 +302,7 @@ Ask about my grandmother's sourdough recipe.</textarea>
               </div>
 
               <label class="field" for="forget-query">Forget cells matching a query</label>
-              <input id="forget-query" class="input" type="search" style="min-height:0;padding:10px 14px" placeholder="staging database" autocomplete="off">
+              <input id="forget-query" class="input input--compact" type="search" placeholder="staging database" autocomplete="off">
               <div class="btn-row">
                 <button type="button" class="btn btn--outline" id="forget-run">Forget matching</button>
               </div>
@@ -447,6 +463,10 @@ Ask about my grandmother's sourdough recipe.</textarea>
           <li><a href="usage.html">Usage</a></li>
           <li><a href="conformance.html">Conformance</a></li>
           <li><a href="faq.html">FAQ</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="packs.html">Memory packs</a></li>
+          <li><a href="architecture.html">Architecture</a></li>
         </ul>
       </nav>
 

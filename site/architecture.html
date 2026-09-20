@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — keepsake</title>
+<meta name="description" content="The keepsake internals: the src module map, the Cell and Vault data model, canonical JSON and the Merkle root, the WebCrypto boundary, how one browser-safe core is shared by the browser app, the Bun CLI, and the MCP server, the esbuild build pipeline, and the test suite.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Architecture — keepsake">
+<meta property="og:description" content="Module map, data model, canonical JSON, the WebCrypto boundary, the shared core, the build pipeline, and the test suite.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/architecture.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Architecture — keepsake">
+<meta name="twitter:description" content="How the keepsake reference implementation is put together.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/architecture.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'7'%20fill%3D'%23c026d3'%2F%3E%3Cg%20transform%3D'translate(4%204)'%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%20%3Crect%20x%3D%224.6%22%20y%3D%224.6%22%20width%3D%2214.8%22%20height%3D%2214.8%22%20rx%3D%222.6%22%3E%3C%2Frect%3E%20%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.4%22%3E%3C%2Fcircle%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24" focusable="false"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="2.6"></rect> <circle cx="12" cy="12" r="3.4"></circle></svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">by svx</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="packs.html">Memory packs</a></li>
+          <li><a href="architecture.html" aria-current="page">Architecture</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Internals</p>
+          <h1>Architecture</h1>
+          <p>The reference implementation is one browser-safe TypeScript core in <code>src/</code>, wrapped by three surfaces: a browser app, a Bun CLI, and an MCP server. Every surface runs the same hashing, crypto, and search code; only the I/O differs.</p>
+        </div>
+
+        <h2>Module map</h2>
+        <p>Everything under <code>src/</code> except the CLI and MCP entry points is browser-safe and free of Node APIs. The files, one line each:</p>
+        <div class="table-wrap">
+          <table>
+            <caption>Modules under src/.</caption>
+            <thead>
+              <tr><th scope="col">File</th><th scope="col">Responsibility</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>types.ts</code></td><td><code>SPEC_VERSION</code> and the shared types: <code>Role</code>, <code>Cell</code>, <code>CellInput</code>, <code>KdfInfo</code>, <code>CipherInfo</code>, <code>VaultFile</code>, <code>MemoryStats</code>.</td></tr>
+              <tr><td><code>bytes.ts</code></td><td>base64, UTF-8, hex, and <code>ArrayBuffer</code> helpers built on browser globals (<code>btoa</code>/<code>atob</code>, <code>TextEncoder</code>).</td></tr>
+              <tr><td><code>canonical.ts</code></td><td>The deterministic JSON serializer: keys sorted recursively, no insignificant whitespace, <code>undefined</code> members omitted.</td></tr>
+              <tr><td><code>crypto.ts</code></td><td>WebCrypto primitives: SHA-256 to lowercase hex, and PBKDF2-SHA256 key derivation to an AES-GCM 256-bit key; <code>DEFAULT_ITERATIONS</code> is 250,000.</td></tr>
+              <tr><td><code>cell.ts</code></td><td>Builds a Cell, assembles its six-field canonical payload, and computes its SHA-256 hash.</td></tr>
+              <tr><td><code>merkle.ts</code></td><td>The Merkle root over sorted cell hashes, plus <code>verifyCells</code> to recompute and flag bad cells.</td></tr>
+              <tr><td><code>bm25.ts</code></td><td>The tokenizer and BM25 lexical ranking, the recall used by the CLI and MCP server.</td></tr>
+              <tr><td><code>semantic.ts</code></td><td>Cosine similarity, vector normalization, and hybrid lexical-plus-semantic ranking for the browser app.</td></tr>
+              <tr><td><code>stats.ts</code></td><td>Cell count, source and tag histograms, and plaintext byte size.</td></tr>
+              <tr><td><code>vault.ts</code></td><td><code>encryptVault</code> and <code>decryptVault</code> (AES-256-GCM under a PBKDF2 key) and <code>vaultSummary</code>.</td></tr>
+              <tr><td><code>vault-ops.ts</code></td><td>Higher-level vault operations: <code>mergeCells</code>, <code>forgetCells</code>, <code>rotateVault</code>, <code>diffVaults</code>.</td></tr>
+              <tr><td><code>context.ts</code></td><td>The token-budgeted Markdown context pack, built on demand and never stored.</td></tr>
+              <tr><td><code>interchange.ts</code></td><td>The memory pack: <code>toBundle</code>, <code>fromBundle</code>, and <code>isBundle</code>. See <a href="packs.html">memory packs</a>.</td></tr>
+              <tr><td><code>conformance.ts</code></td><td>Runs and formats the published conformance vectors (L1 parse, L2 integrity, L3 crypto round-trip).</td></tr>
+              <tr><td><code>index.ts</code></td><td>The browser-safe barrel that re-exports the library; the entry point for the browser bundle.</td></tr>
+              <tr><td><code>cli.ts</code></td><td>The <code>keepsake</code> CLI entry point. The only file that uses <code>node:fs</code>, <code>node:path</code>, and <code>node:url</code>.</td></tr>
+              <tr><td><code>mcp.ts</code></td><td>The MCP server over stdio; imports the core from <code>index.ts</code> and <code>node:fs</code> for vault writes.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The <code>src/import/</code> directory holds the parsers that feed <code>index.ts</code>: <code>detect.ts</code> labels a source from a filename, <code>chatgpt.ts</code> handles ChatGPT exports and generic message extraction, <code>claude.ts</code> handles Claude <code>conversations.json</code>, <code>jsonl.ts</code> handles JSONL transcripts, and <code>import/index.ts</code> normalizes and dispatches an input to the right parser. There is an empty <code>src/mcp/</code> directory; the server itself lives in <code>src/mcp.ts</code>.</p>
+
+        <h2>Data model</h2>
+        <p>Two structures carry the format. A <strong>Cell</strong> is one memory; a <strong>Vault</strong> is the encrypted container that holds them.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>Cell members (src/types.ts).</caption>
+            <thead>
+              <tr><th scope="col">Field</th><th scope="col">Type</th><th scope="col">Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>string</td><td>A UUID in canonical lowercase hyphenated form. Unique within a vault.</td></tr>
+              <tr><td><code>text</code></td><td>string</td><td>The memory itself.</td></tr>
+              <tr><td><code>source</code></td><td>string</td><td>Where it came from, such as an import label or a conversation title.</td></tr>
+              <tr><td><code>role</code></td><td><code>user | assistant | note | system</code></td><td>The speaker or kind of the text.</td></tr>
+              <tr><td><code>createdAt</code></td><td>string</td><td>An ISO 8601 timestamp.</td></tr>
+              <tr><td><code>tags</code></td><td>string[]</td><td>Free-form labels.</td></tr>
+              <tr><td><code>hash</code></td><td>string</td><td>Lowercase hex SHA-256 of the canonical payload, defined below.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A <strong>VaultFile</strong> is JSON with the members <code>format</code> (<code>"keepsake/v1"</code>), <code>createdAt</code>, <code>cells</code> (a count, not the array), <code>kdf</code> (<code>name</code>, <code>iterations</code>, base64 <code>salt</code>), <code>cipher</code> (<code>name</code>, base64 <code>iv</code>), base64 <code>ciphertext</code> that includes the 16-byte GCM tag, and <code>merkle</code>. The plaintext inside <code>ciphertext</code> is the canonical JSON of the full cells array.</p>
+
+        <h3>The canonical payload and the cell hash</h3>
+        <p>The canonical payload is the six non-<code>hash</code> members of a cell. The cell hash is <code>SHA-256(canonicalJson(payload))</code>, rendered as lowercase hex. Because the serializer is deterministic, two implementations that hold the same cell compute the same hash.</p>
+
+        <h3>Canonical JSON</h3>
+        <p><code>src/canonical.ts</code> is the exact encoding that is hashed and encrypted, so every implementation must produce identical bytes. Its rules:</p>
+        <ol>
+          <li><strong>Objects.</strong> Keys are emitted in ascending order, compared by Unicode code point. Members whose value is <code>undefined</code> are omitted. There is no insignificant whitespace: <code>{</code> and <code>}</code> hug the members, and <code>,</code> and <code>:</code> are unadorned.</li>
+          <li><strong>Arrays.</strong> Element order is preserved, and arrays may be empty. An <code>undefined</code> element becomes <code>null</code>.</li>
+          <li><strong>Strings.</strong> Standard JSON escapes; control characters below <code>0x20</code> use the shortest form. Non-ASCII characters are emitted literally as UTF-8, not <code>\u</code>-escaped.</li>
+          <li><strong>Numbers.</strong> Emitted as JSON numbers with no leading zero and no trailing fraction zero. Only integers appear in the fields this format defines.</li>
+          <li><strong>Booleans and null.</strong> Emitted as <code>true</code>, <code>false</code>, and <code>null</code>.</li>
+          <li><strong>Edge cases.</strong> <code>null</code> and <code>undefined</code> serialize to <code>null</code>; a non-finite number serializes to <code>null</code>; a <code>bigint</code> serializes to its decimal string.</li>
+        </ol>
+
+        <h3>The Merkle root</h3>
+        <p>The root commits to the set of cell hashes and does not depend on cell order:</p>
+        <ol>
+          <li>Take every cell's <code>hash</code> as a lowercase hex string.</li>
+          <li>Sort the list in ascending lexicographic order; for lowercase hex this equals byte order.</li>
+          <li>While more than one value remains, walk the list in adjacent pairs and replace each pair <code>(left, right)</code> with <code>sha256(left + right)</code>, where <code>+</code> concatenates the two hex <strong>strings</strong> and the result is hashed as UTF-8. An odd final value is carried to the next level unchanged, never duplicated.</li>
+          <li>The single remaining value is the root. An empty cell set has root <code>sha256("")</code>, which is <code>e3b0c44298fc1c14<wbr>9afbf4c8996fb924<wbr>27ae41e4649b934c<wbr>a495991b7852b855</code>.</li>
+        </ol>
+
+        <h2>The crypto boundary</h2>
+        <p>Cryptography is confined to two modules, both using only the WebCrypto API so the same code runs in a browser tab and in Bun:</p>
+        <ul>
+          <li><code>src/crypto.ts</code> calls <code>crypto.subtle.digest("SHA-256", …)</code> for hashing and <code>crypto.subtle.importKey</code> plus <code>crypto.subtle.deriveKey</code> to turn a passphrase and salt into an AES-GCM key with PBKDF2-SHA256.</li>
+          <li><code>src/vault.ts</code> fills the salt and IV with <code>crypto.getRandomValues</code> (16 and 12 bytes) and calls <code>crypto.subtle.encrypt</code> and <code>crypto.subtle.decrypt</code> with AES-GCM.</li>
+          <li><code>src/cell.ts</code> generates ids with <code>crypto.randomUUID()</code>.</li>
+        </ul>
+        <p>This is the reason for the hard rule that <code>src/</code> must stay browser-safe: no <code>node:</code> imports and no Node-only globals, because the core is bundled for the browser. The only files that break that rule are the two entry points that need a filesystem, <code>src/cli.ts</code> (<code>node:fs</code>, <code>node:path</code>, <code>node:url</code>) and <code>src/mcp.ts</code> (<code>node:fs</code>). The vault is never opened by a remote key or a hosted service; decryption happens in process, with a passphrase read from the environment by the CLI or entered in the browser.</p>
+
+        <h2>One core, three surfaces</h2>
+        <p><code>src/index.ts</code> is the shared barrel. Each surface imports it, so there is a single implementation of the format:</p>
+        <div class="defgrid">
+          <div>
+            <dt>Browser app</dt>
+            <dd>The <a href="index.html#app">landing page</a> loads the generated <code>assets/app.js</code> bundle, which exposes the library as the global <code>Keepsake</code>. Import, search, seal, and open all run in the tab.</dd>
+          </div>
+          <div>
+            <dt>Bun CLI</dt>
+            <dd><code>src/cli.ts</code> imports <code>./index.ts</code> and <code>./mcp.ts</code>, parses arguments, and reads and writes vault and pack files. It is the reference for scripts and CI.</dd>
+          </div>
+          <div>
+            <dt>MCP server</dt>
+            <dd><code>src/mcp.ts</code> imports the core from <code>./index.ts</code> and serves recall, context, stats, verify, remember, and forget over stdio.</dd>
+          </div>
+          <div>
+            <dt>Shared engine</dt>
+            <dd>Hashing, canonical JSON, the Merkle root, AES-GCM, BM25, context packs, and the memory pack are the same functions everywhere.</dd>
+          </div>
+        </div>
+
+        <h2>Module dependencies</h2>
+        <p>Arrows point from a module to what it imports. <code>index.ts</code> re-exports the leaves and is the only entry point the surfaces share.</p>
+        <div class="term" aria-label="Module dependency diagram">
+          <div class="term__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term__title">src/ module flow</span>
+          </div>
+          <pre class="term__body term__body--wrap">types.ts   (shared types, no imports)
+  |
+  +-- canonical.ts   key-sorted JSON
+  +-- bytes.ts       base64 / utf8 / hex
+  |     +-- crypto.ts    SHA-256 + PBKDF2
+  +-- bm25.ts        BM25 ranking
+  +-- semantic.ts    cosine (browser)
+  +-- stats.ts       counts + bytes
+  |
+  +-- cell.ts    (canonical + crypto)
+  |     +-- merkle.ts
+  |           +-- vault.ts
+  |                 +-- vault-ops.ts
+  |     +-- vault-ops.ts
+  +-- interchange.ts  (canonical/cell/merkle)
+  +-- conformance.ts  (bytes/canonical/vault)
+  +-- import/*.ts  ->  index.ts barrel
+                           |
+              +------------+------------+
+        cli.ts (+ node:*)   mcp.ts (+ node:fs)
+                           |
+              browser app  &lt;--  build-site.mjs
+                           (esbuild -> app.js)</pre>
+        </div>
+
+        <h2>Build pipeline</h2>
+        <p><code>scripts/build-site.mjs</code> bundles the core for the browser. It imports <code>node:fs/promises</code>, <code>node:fs</code>, <code>node:path</code>, <code>node:url</code>, and <code>esbuild</code>, then builds with these options:</p>
+        <div class="table-wrap">
+          <table>
+            <caption>esbuild options in scripts/build-site.mjs.</caption>
+            <thead>
+              <tr><th scope="col">Option</th><th scope="col">Value</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>entry point</td><td><code>src/index.ts</code></td></tr>
+              <tr><td>output</td><td><code>site/assets/app.js</code></td></tr>
+              <tr><td><code>bundle</code></td><td><code>true</code></td></tr>
+              <tr><td><code>format</code></td><td><code>iife</code></td></tr>
+              <tr><td><code>platform</code></td><td><code>browser</code></td></tr>
+              <tr><td><code>target</code></td><td><code>es2022</code></td></tr>
+              <tr><td><code>minify</code></td><td><code>true</code></td></tr>
+              <tr><td><code>globalName</code></td><td><code>Keepsake</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The bundle is a single self-contained IIFE; the page loads it with a local <code>&lt;script&gt;</code> and calls into the <code>Keepsake</code> global. If <code>src/index.ts</code> is missing the script prints a skip message and returns. The rule that <code>src/</code> has no <code>node:</code> imports is what makes this bundle possible: esbuild can resolve the whole graph for the browser with no Node shims.</p>
+
+        <h2>Testing</h2>
+        <p>Tests live in <code>tests/</code> and run with <code>bun test</code>. The suite is currently <strong>158 tests across 17 files</strong>, with <strong>319 <code>expect()</code> calls</strong>.</p>
+        <div class="term" aria-label="Running the test suite">
+          <div class="term__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term__title">bun test</span>
+          </div>
+          <pre class="term__body term__body--wrap"><span class="ln"><span class="p">$ </span><span class="cmd">bun test</span></span><span class="ln"><span class="ok">158 pass</span>  <span class="dim">0 fail</span></span><span class="ln"><span class="dim">319 expect() calls</span></span><span class="ln"><span class="dim">Ran 158 tests across 17 files.</span></span></pre>
+        </div>
+        <p>The 17 files cover:</p>
+        <div class="defgrid">
+          <div>
+            <dt>Format and integrity</dt>
+            <dd><code>canonical.test.ts</code>, <code>cell.test.ts</code>, <code>merkle.test.ts</code> — key ordering, the canonical payload and hash, odd and even pairing, and the empty root.</dd>
+          </div>
+          <div>
+            <dt>Primitives</dt>
+            <dd><code>bytes.test.ts</code> and <code>crypto.test.ts</code> — base64 and UTF-8 round-trips, SHA-256 vectors, and PBKDF2 derivation.</dd>
+          </div>
+          <div>
+            <dt>Container</dt>
+            <dd><code>vault.test.ts</code> and <code>vault-ops.test.ts</code> — seal and open, wrong-passphrase and tamper rejection, merge, forget, rotate, and diff.</dd>
+          </div>
+          <div>
+            <dt>Recall</dt>
+            <dd><code>bm25.test.ts</code>, <code>context.test.ts</code>, and <code>semantic.test.ts</code> — ranking, the token budget, cosine, and hybrid blending.</dd>
+          </div>
+          <div>
+            <dt>Interchange</dt>
+            <dd><code>interchange.test.ts</code> and <code>conformance.test.ts</code> — pack round-trips, tamper rejection, and the published vectors.</dd>
+          </div>
+          <div>
+            <dt>Import and entry points</dt>
+            <dd><code>import.test.ts</code>, <code>import-extra.test.ts</code>, <code>cli.test.ts</code>, and <code>mcp.test.ts</code> — the parsers, argument handling, exit codes, and the MCP tools.</dd>
+          </div>
+        </div>
+        <p><code>bun run typecheck</code> runs <code>tsc --noEmit</code>, and <code>bun run check:site</code> validates every <code>site/*.html</code> page: exactly one <code>&lt;h1&gt;</code> and one <code>&lt;main&gt;</code>, a skip link that resolves, and only classes defined in <code>lens.css</code> or <code>theme.css</code>.</p>
+
+        <div class="docs__foot">
+          <a href="packs.html">← Memory packs</a>
+          <a href="spec.html">Spec →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="architecture.html">Architecture</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT Licensed · © 2026.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

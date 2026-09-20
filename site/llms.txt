@@ -10,6 +10,10 @@ Everything runs offline, with no network calls and no telemetry. Transport is th
 - [Overview](https://srivtx.github.io/keepsake/): Why memory should be a file you own, and what keepsake is.
 - [Spec](https://srivtx.github.io/keepsake/spec): The normative `keepsake/v1` format: the Cell, canonical JSON, hashing, the Merkle root, the Vault container, KDF and AEAD parameters, import rules, and conformance levels.
 - [Usage](https://srivtx.github.io/keepsake/usage): CLI commands and exit codes, the MCP server, and the browser app.
+- [Security](https://srivtx.github.io/keepsake/security): Threat model, the exact cryptographic construction, offline posture, and what is and is not verified.
+- [MCP](https://srivtx.github.io/keepsake/mcp): Give an agent recall over a vault: `keepsake mcp`, the client configuration, and the six tools.
+- [Memory packs](https://srivtx.github.io/keepsake/packs): Lossless plaintext Markdown packs: the `pack` and `unpack` lifecycle, the format, and what is preserved.
+- [Architecture](https://srivtx.github.io/keepsake/architecture): The module map, the data model, the crypto boundary, and how one codebase serves the app, the CLI, and MCP.
 - [Conformance](https://srivtx.github.io/keepsake/conformance): The three conformance levels (parse, integrity, crypto round-trip) and the test vectors.
 - [FAQ](https://srivtx.github.io/keepsake/faq): Scope, security model, and the honest limits of version 0.1.
 

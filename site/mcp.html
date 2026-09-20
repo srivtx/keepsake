@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MCP — keepsake</title>
+<meta name="description" content="Give an AI agent recall over a keepsake vault over MCP: run keepsake mcp, configure a stdio client, the six memory_* tools and their parameters, memory_context versus memory_recall, and troubleshooting.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="MCP — keepsake">
+<meta property="og:description" content="Give an AI agent recall over a keepsake vault over MCP: run the server, configure a client, and use the six memory tools.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/mcp.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MCP — keepsake">
+<meta name="twitter:description" content="Give an AI agent recall over a keepsake vault over MCP.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/mcp.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'7'%20fill%3D'%23c026d3'%2F%3E%3Cg%20transform%3D'translate(4%204)'%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%20%3Crect%20x%3D%224.6%22%20y%3D%224.6%22%20width%3D%2214.8%22%20height%3D%2214.8%22%20rx%3D%222.6%22%3E%3C%2Frect%3E%20%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.4%22%3E%3C%2Fcircle%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24" focusable="false"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="2.6"></rect> <circle cx="12" cy="12" r="3.4"></circle></svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">by svx</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html" aria-current="page">MCP</a></li>
+          <li><a href="packs.html">Memory packs</a></li>
+          <li><a href="architecture.html">Architecture</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Agent integration · MCP</p>
+          <h1>MCP server</h1>
+          <p>MCP (Model Context Protocol) is an open protocol that lets an AI agent call tools exposed by a local process over a transport such as stdio. Pointed at a keepsake vault, the keepsake MCP server gives an agent recall, write, and verify access to your memory without a vendor holding it.</p>
+        </div>
+
+        <h2>Run the server</h2>
+        <p>The server is a subcommand of the same <code>keepsake</code> binary. It takes the vault path from <code>--vault</code> and the passphrase from <code>KEEPSAKE_PASSPHRASE</code>; there is no passphrase flag. It reads the passphrase once at startup, so an unset variable is an error rather than a prompt.</p>
+        <div class="term" aria-label="Running the MCP server">
+          <div class="term__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term__title">keepsake mcp</span>
+          </div>
+          <pre class="term__body term__body--wrap"><span class="ln"><span class="dim"># passphrase from the environment, vault from --vault</span></span><span class="ln"><span class="p">$ </span><span class="cmd">KEEPSAKE_PASSPHRASE='correct horse battery staple' keepsake mcp --vault memory.keepsake</span></span><span class="ln"></span><span class="ln"><span class="dim"># the server then speaks newline-delimited JSON-RPC 2.0 on stdio</span></span></pre>
+        </div>
+        <p>The server makes no network calls. The vault is opened in process and decrypted on each tool call, so the plaintext is never held by a service. The only method it answers beyond <code>tools/list</code> and <code>tools/call</code> is <code>initialize</code>, <code>notifications/initialized</code>, and <code>ping</code>.</p>
+
+        <h2>Configure a stdio client</h2>
+        <p>Add the server to an MCP client's configuration. The passphrase belongs in the <code>env</code> block of the server entry, never in <code>args</code>.</p>
+        <pre class="code"><code>{
+  "mcpServers": {
+    "keepsake": {
+      "command": "keepsake",
+      "args": ["mcp", "--vault", "/home/you/memory.keepsake"],
+      "env": { "KEEPSAKE_PASSPHRASE": "…" }
+    }
+  }
+}</code></pre>
+        <p>If you have not installed the binary globally, run it through Bun instead. This is the same server with the same arguments:</p>
+        <pre class="code"><code>{
+  "mcpServers": {
+    "keepsake": {
+      "command": "bunx",
+      "args": ["github:srivtx/keepsake#main", "mcp", "--vault", "/home/you/memory.keepsake"],
+      "env": { "KEEPSAKE_PASSPHRASE": "…" }
+    }
+  }
+}</code></pre>
+        <div class="callout" role="note">
+          <p>The <code>env</code> value is visible to the client process. Use a secret manager or an OS keychain to fill it where you can, keep the config file out of version control, and never move the passphrase into <code>args</code>.</p>
+        </div>
+
+        <h2>The tools</h2>
+        <p>The server exposes six tools: four to read and two to write. Names and parameters are case-sensitive.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>The keepsake MCP tools.</caption>
+            <thead>
+              <tr><th scope="col">Tool</th><th scope="col">Parameters</th><th scope="col">What it returns</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>memory_recall</code></td>
+                <td><code>query</code> (string, required); <code>size</code> (integer, optional, 1–50, default 5)</td>
+                <td>Ranked BM25 matches, one per blank-line-separated block, as <code>n. [source · createdAt] text</code>. Returns a "No memories matched" line when nothing matches.</td>
+              </tr>
+              <tr>
+                <td><code>memory_remember</code></td>
+                <td><code>text</code> (string, required); <code>tags</code> (array of string, optional)</td>
+                <td>Appends one cell with source <code>mcp</code> and role <code>note</code>, rewrites the vault, and returns <code>Stored memory &lt;id&gt; (vault now holds N cells).</code></td>
+              </tr>
+              <tr>
+                <td><code>memory_context</code></td>
+                <td><code>task</code> (string, required); <code>budgetTokens</code> (integer, optional, 100–20000, default 1500)</td>
+                <td>A token-budgeted Markdown context pack for the task — the same pack as <code>keepsake context</code>. It is transient and never written to disk.</td>
+              </tr>
+              <tr>
+                <td><code>memory_forget</code></td>
+                <td><code>id</code> (string, optional) or <code>query</code> (string, optional); at least one required</td>
+                <td>Removes matching cells by exact id or by search query, rewrites the vault, and returns <code>Forgot N memory(ies); M remain.</code> or <code>No memories matched.</code></td>
+              </tr>
+              <tr>
+                <td><code>memory_stats</code></td>
+                <td>none</td>
+                <td>The cell count, plaintext byte size, sources with counts, and tags with counts.</td>
+              </tr>
+              <tr>
+                <td><code>memory_verify</code></td>
+                <td>none</td>
+                <td><code>ok — N cell(s), Merkle root &lt;root&gt;</code>, after re-checking every cell hash and the Merkle root.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p>The two writing tools rewrite the vault file in place. They preserve the iteration count already stored in the vault, and they fail if the file is not writable or the passphrase is wrong. Recall, stats, and context read and decrypt the vault on every call.</p>
+
+        <h2>memory_context or memory_recall?</h2>
+        <p>They answer different questions. <code>memory_recall</code> takes a search query and returns the handful of cells that match it, so an agent can cite specific memories. <code>memory_context</code> takes a <em>task</em> and returns one assembled Markdown block sized to a token budget, so an agent can drop a bounded slice of memory straight into a prompt.</p>
+        <p>Use <code>memory_context</code> when you are about to give the model background for a job — it spends at most <code>budgetTokens</code> and, when nothing matches the task, falls back to the most recent cells (up to 50) instead of coming back empty. Use <code>memory_recall</code> when you want the top matches for a specific query, with their scores implied by rank. Both are lexical BM25; neither uses embeddings.</p>
+
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li><strong>The client reports the server exited immediately.</strong> <code>KEEPSAKE_PASSPHRASE</code> was not set for that process. The error is <code>no passphrase: set KEEPSAKE_PASSPHRASE in the environment (keepsake never takes it as an argument)</code>.</li>
+          <li><strong>Every call fails with a vault error.</strong> Confirm the passphrase with <code>KEEPSAKE_PASSPHRASE='…' keepsake verify --vault memory.keepsake</code>. A wrong passphrase and a corrupt or truncated vault report the same failure by design.</li>
+          <li><strong>No tools appear.</strong> Make sure the client can spawn the command — a bare <code>keepsake</code> must be on the client's <code>PATH</code>, or use the <code>bunx</code> form above. The server advertises its tools over <code>tools/list</code> at protocol version <code>2024-11-05</code>.</li>
+          <li><strong>Writes do nothing.</strong> <code>memory_remember</code> and <code>memory_forget</code> rewrite the vault file, so the path must be writable by the server process. A read-only file or a directory the process cannot write fails the call.</li>
+          <li><strong>Recall misses a memory you know is there.</strong> The CLI and MCP server use lexical BM25 only; the on-device semantic model is a browser-app feature. Try the words that actually appear in the cell, or check the vault with <code>memory_stats</code>.</li>
+          <li><strong>An agent seems to use stale memory.</strong> Each read decrypts the vault fresh, so the file is current; the stale copy is usually in the agent's own context. Restart the conversation or re-issue the call.</li>
+        </ul>
+
+        <div class="docs__foot">
+          <a href="security.html">← Security</a>
+          <a href="spec.html">Spec →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="packs.html">Memory packs</a></li>
+          <li><a href="architecture.html">Architecture</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT Licensed · © 2026.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

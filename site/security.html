@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security — keepsake</title>
+<meta name="description" content="The keepsake threat model and cryptographic construction: PBKDF2-SHA256, AES-256-GCM, the Merkle root, passphrase handling, the offline posture, what the implementation validates, and what it does not.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Security — keepsake">
+<meta property="og:description" content="The keepsake threat model, the exact cryptographic construction, passphrase handling, and the honest limits.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/security.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Security — keepsake">
+<meta name="twitter:description" content="The keepsake threat model, the exact cryptographic construction, and the honest limits.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/security.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2032%2032'%3E%3Crect%20width%3D'32'%20height%3D'32'%20rx%3D'7'%20fill%3D'%23c026d3'%2F%3E%3Cg%20transform%3D'translate(4%204)'%20fill%3D'none'%20stroke%3D'%23ffffff'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%20%3Crect%20x%3D%224.6%22%20y%3D%224.6%22%20width%3D%2214.8%22%20height%3D%2214.8%22%20rx%3D%222.6%22%3E%3C%2Frect%3E%20%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223.4%22%3E%3C%2Fcircle%3E%3C%2Fg%3E%3C%2Fsvg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 24 24" focusable="false"><rect x="4.6" y="4.6" width="14.8" height="14.8" rx="2.6"></rect> <circle cx="12" cy="12" r="3.4"></circle></svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">by svx</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="security.html" aria-current="page">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="packs.html">Memory packs</a></li>
+          <li><a href="architecture.html">Architecture</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Security · keepsake/v1</p>
+          <h1>Security</h1>
+          <p>The security boundary is the vault file. keepsake seals your memory with standard, well-understood primitives and runs entirely on your machine, but a security page that overclaims is worse than none. This page states the threat model, the exact construction, and the limits plainly.</p>
+        </div>
+
+        <h2>Threat model</h2>
+        <p>keepsake protects the contents of your memory at rest on a machine you control, and makes any change to that memory detectable. It is not an access-control system: anyone who has the file <em>and</em> the passphrase has the full plaintext.</p>
+
+        <h3>What it protects against</h3>
+        <ul>
+          <li><strong>Confidentiality at rest.</strong> The plaintext is sealed with AES-256-GCM. Without the passphrase, the ciphertext is unreadable.</li>
+          <li><strong>Tampering.</strong> The GCM tag, the per-cell SHA-256 hashes, and the Merkle root make a modified, truncated, or reordered vault fail to open or verify.</li>
+          <li><strong>Network exposure.</strong> There is no server, no account, no network call, and no telemetry. Importing, searching, sealing, and opening run in process.</li>
+          <li><strong>Key escrow.</strong> The passphrase is never stored in the vault and the reference implementation never writes it to disk. No third party holds a key.</li>
+        </ul>
+
+        <h3>What it does not protect against</h3>
+        <ul>
+          <li><strong>An attacker with the passphrase.</strong> A guessed or stolen passphrase is a full read. There is no recovery and no second factor, and a weak passphrase can be brute-forced offline.</li>
+          <li><strong>A compromised host or browser session.</strong> Once decrypted, plaintext lives in memory and can be read by malware, a debugger, or a malicious extension.</li>
+          <li><strong>Metadata.</strong> The container is not encrypted. The format version, creation time, cell count, KDF parameters, and the exact ciphertext length (which approximates the plaintext length) are visible to anyone with the file.</li>
+          <li><strong>The Merkle commitment.</strong> The root is public: equal roots mean equal cell sets, and a low-entropy cell can be guessed and confirmed by recomputing its hash.</li>
+          <li><strong>Destination and copies.</strong> Where you store, sync, or send the file — a cloud drive, a backup, an email — is outside the model. Copies cannot be recalled.</li>
+          <li><strong>Loss, forward secrecy, and revocation.</strong> A lost passphrase means a lost vault. One long-lived passphrase protects every generation, and there is no re-wrap in place.</li>
+        </ul>
+
+        <h2>The cryptographic construction</h2>
+        <p>Sealing draws a fresh random salt and IV, derives a key from the passphrase, and encrypts the canonical JSON of the cells array. The plaintext includes every cell, with its <code>hash</code> field, exactly as stored. There is no additional authenticated data.</p>
+        <pre class="code code--wrap"><code>plaintext  = UTF-8( canonicalJson( cells[] ) )
+key        = PBKDF2-SHA256(passphrase, salt, iterations, dkLen = 32)
+ciphertext = AES-256-GCM-Encrypt(key, iv, plaintext, tagLength = 128)
+vault.ciphertext = base64( ciphertext · tag )</code></pre>
+        <div class="table-wrap">
+          <table>
+            <caption>The exact parameters, as implemented in src/vault.ts and src/crypto.ts.</caption>
+            <thead>
+              <tr><th scope="col">Parameter</th><th scope="col">Value</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>KDF</td><td>PBKDF2-HMAC-SHA-256</td></tr>
+              <tr><td>KDF salt</td><td>16 random bytes per vault (<code>crypto.getRandomValues</code>)</td></tr>
+              <tr><td>KDF iterations</td><td><code>250000</code> default; a reader honors the stored value and never substitutes its own</td></tr>
+              <tr><td>Derived key</td><td>256 bits (32 bytes)</td></tr>
+              <tr><td>Cipher</td><td>AES-256-GCM</td></tr>
+              <tr><td>IV</td><td>12 random bytes per encryption; never reused under the same key</td></tr>
+              <tr><td>Tag length</td><td>128 bits (16 bytes), appended to the ciphertext</td></tr>
+              <tr><td>AAD</td><td>none</td></tr>
+              <tr><td>Ciphertext encoding</td><td>Base64, standard alphabet with padding</td></tr>
+              <tr><td>Plaintext</td><td>UTF-8 canonical JSON of the cells array (keys sorted, no insignificant whitespace)</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Integrity and the Merkle root</h3>
+        <p>AES-256-GCM authenticates the ciphertext: a modified, truncated, or reordered file fails the tag check. A second, independent check covers the plaintext. Each cell's <code>hash</code> is the SHA-256 of its canonical payload (the six fields other than <code>hash</code>), and the vault's <code>merkle</code> is a SHA-256 tree over the sorted list of cell hashes. Internal nodes hash the concatenation of two lowercase-hex children; an odd node is carried up unchanged rather than duplicated.</p>
+        <pre class="code code--wrap"><code>merkle = SHA-256 tree over sorted, lowercase-hex cell hashes
+empty vault root = sha256("") = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code></pre>
+        <p>Because the Merkle root commits to the plaintext rather than the ciphertext, it is re-derived after decryption and compared against the stored root. That is an independent check on the cell contents: it does not rely on the GCM tag, and it catches a plaintext change even if the ciphertext still decrypts.</p>
+
+        <h2>The passphrase</h2>
+        <p>The passphrase is never accepted on the command line. A flag would land in your shell history and in the process table. The CLI reads it only from the environment, and the reference implementation never writes it to disk. There is no recovery: a lost passphrase means a lost vault.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>The passphrase environment variables.</caption>
+            <thead>
+              <tr><th scope="col">Variable</th><th scope="col">Used by</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>KEEPSAKE_PASSPHRASE</code></td><td>Every command that opens a vault — <code>import</code>, <code>search</code>, <code>export</code>, <code>verify</code>, <code>stats</code>, <code>mcp</code>, <code>context</code>, <code>forget</code>, <code>pack</code>, <code>unpack</code>, and the first vault of <code>merge</code> and <code>diff</code>.</td></tr>
+              <tr><td><code>KEEPSAKE_PASSPHRASE_B</code></td><td>The second vault in <code>merge</code> and <code>diff</code>. If it is unset, the same value as <code>KEEPSAKE_PASSPHRASE</code> is used for both.</td></tr>
+              <tr><td><code>KEEPSAKE_NEW_PASSPHRASE</code></td><td><code>rotate</code>: the new passphrase. The current passphrase still comes from <code>KEEPSAKE_PASSPHRASE</code>.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <pre class="code code--wrap"><code>KEEPSAKE_PASSPHRASE='correct horse battery staple' keepsake export --vault memory.keepsake
+
+KEEPSAKE_PASSPHRASE='old' KEEPSAKE_NEW_PASSPHRASE='new' keepsake rotate --vault memory.keepsake</code></pre>
+
+        <h2>Offline posture</h2>
+        <p>keepsake contains no network code. It never opens a socket, uploads a vault, fetches a remote resource, or checks for updates, and it collects no telemetry about your vaults, usage, or machine. The vault is opened in process: the CLI and the MCP server read the file directly and make no network calls.</p>
+        <p>The browser app's optional semantic recall is self-hosted. It ships the Transformers.js v3 runtime, the <code>Xenova/all-MiniLM-L6-v2</code> model at <code>dtype: q8</code>, and the ONNX Runtime Web WASM binaries from its own <code>assets/</code>, <code>models/</code>, and <code>wasm/</code> directories, served from the same origin. The app sets <code>env.allowLocalModels = true</code> and <code>env.allowRemoteModels = false</code>, so no memory or query leaves the machine and no external request is made. The feature is optional; the CLI and the MCP server stay lexical (BM25) and do not load a model at all.</p>
+
+        <h2>What we validate</h2>
+        <ul>
+          <li>The vault parses as UTF-8 JSON and declares <code>format: keepsake/v1</code>, <code>kdf.name: PBKDF2-SHA256</code>, and <code>cipher.name: AES-GCM</code>.</li>
+          <li>The AES-256-GCM tag verifies on decrypt. A wrong passphrase, truncation, or modification fails with an error and never emits partial plaintext.</li>
+          <li>Every cell's recomputed SHA-256 hash equals its stored <code>hash</code>.</li>
+          <li>The Merkle root of the cell hashes equals the vault's <code>merkle</code>.</li>
+          <li>The published conformance vectors: L1 parse, L2 integrity, and L3 crypto round-trip, run by <code>keepsake conformance</code>.</li>
+          <li>In CI, the composite action in <code>action.yml</code> runs <code>keepsake verify</code> against a committed vault and fails the job when any check fails.</li>
+        </ul>
+
+        <h2>What we do not validate</h2>
+        <ul>
+          <li><strong>The container metadata.</strong> The base64 container and <code>createdAt</code> are informational and are not covered by the GCM tag.</li>
+          <li><strong>Passphrase strength.</strong> The format cannot tell a strong passphrase from a weak one; PBKDF2 raises the cost of guessing but cannot rescue a weak secret.</li>
+          <li><strong>Authorship.</strong> There are no signatures or sender identities. A vault does not prove who sealed it.</li>
+          <li><strong>Freshness.</strong> There is no anti-rollback: an attacker who replaces a vault with an older valid one is not detected.</li>
+          <li><strong>Metadata secrecy.</strong> Format, creation time, cell count, KDF parameters, ciphertext length, and the Merkle root are all visible.</li>
+          <li><strong>The plaintext in memory.</strong> Once opened, cells are ordinary in-memory strings; a memory pack written by <code>pack</code> is plaintext and not encrypted.</li>
+          <li><strong>Recovery, forward secrecy, and revocation.</strong> No escrow, no recovery path, no per-generation keys, and copies cannot be recalled.</li>
+          <li><strong>Semantic recall.</strong> The browser embeddings are a convenience layered over the same cells; they are not part of the format and are not validated by a vault.</li>
+        </ul>
+
+        <h2>Reporting a vulnerability</h2>
+        <div class="callout" role="note">
+          <p>The full policy — supported versions, scope, and the reporting process — lives in <a href="https://github.com/srivtx/keepsake/blob/main/SECURITY.md">SECURITY.md</a> in the repository. Report suspected vulnerabilities privately through <a href="https://github.com/srivtx/keepsake/security/advisories/new">GitHub Security Advisories</a>. Do not open a public issue.</p>
+        </div>
+
+        <div class="docs__foot">
+          <a href="usage.html">← Usage</a>
+          <a href="mcp.html">MCP →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="security.html">Security</a></li>
+          <li><a href="mcp.html">MCP</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+          <li><a href="packs.html">Memory packs</a></li>
+          <li><a href="architecture.html">Architecture</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT Licensed · © 2026.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>
