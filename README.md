@@ -152,6 +152,27 @@ write. `memory_context` returns the same token-budgeted pack as the CLI, and
 passphrase on startup. It makes no network calls: the vault is opened
 in-process.
 
+## On-device semantic recall
+
+The browser app can optionally run a real embedding model in the tab. After you
+click **Load on-device model**, it embeds every cell (384 dimensions, mean-pooled
+and normalized), and search gains three modes:
+
+- **lexical** — BM25 over the cell text. This is the default, and the only mode
+  the CLI and the MCP server use.
+- **semantic** — cosine similarity over the on-device embeddings, so a query can
+  match a cell that shares no words with it.
+- **hybrid** — a blend of the lexical and semantic scores.
+
+The model is self-hosted. The site ships the Transformers.js v3 runtime, the
+`Xenova/all-MiniLM-L6-v2` model at `dtype: q8`, and the ONNX Runtime Web WASM
+binaries from its own `assets/`, `models/`, and `wasm/` directories, so loading
+it adds roughly 45 MB of static assets served from the same origin. Everything
+runs in the browser: no memory or query leaves the machine and no external
+requests are made. The feature is optional, and the app works fine without
+loading it. The CLI and the MCP server stay lexical (BM25); semantic recall is a
+browser-app capability for now.
+
 ## Move your memory between tools
 
 A vault and a pack are two projections of the same cells. The **vault** is the
@@ -191,7 +212,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: srivtx/keepsake@v0.4.0
+      - uses: srivtx/keepsake@v0.5.0
         with:
           vault: memory.keepsake
           passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
@@ -201,11 +222,11 @@ Pass the passphrase as a repository secret, never a literal string. The action
 defaults to `version: main`; pin it to a tag to match the release you run:
 
 ```yaml
-      - uses: srivtx/keepsake@v0.4.0
+      - uses: srivtx/keepsake@v0.5.0
         with:
           vault: memory.keepsake
           passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
-          version: v0.4.0
+          version: v0.5.0
 ```
 
 ## The format in brief

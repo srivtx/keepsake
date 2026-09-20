@@ -28,6 +28,8 @@ export {
   parseConversation,
 } from "./import/chatgpt.ts";
 export { memoryStats } from "./stats.ts";
+export { cosine, hybridRank, normalizeVector, rankVectors } from "./semantic.ts";
+export type { VectorHit } from "./semantic.ts";
 export { runConformance, formatConformance } from "./conformance.ts";
 export type { ConformanceCheck, ConformanceReport, Vectors } from "./conformance.ts";
 export { mergeCells, forgetCells, rotateVault, diffVaults } from "./vault-ops.ts";

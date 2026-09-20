@@ -164,9 +164,15 @@ Ask about my grandmother's sourdough recipe.</textarea>
 
                 <div class="card">
                   <h3>2 · Search</h3>
-                  <p class="muted">Exact, lexical BM25 ranking over the imported cells. No embeddings in <code>keepsake/v1</code>.</p>
+                  <p class="muted">Exact, lexical BM25 ranking by default, with optional on-device embeddings you can load in card 6. The <code>keepsake/v1</code> file itself stores no embeddings.</p>
                   <label class="field" for="search-query">Query</label>
                   <input id="search-query" class="input" type="search" style="min-height:0;padding:10px 14px" placeholder="staging database" autocomplete="off">
+                  <label class="field" for="search-mode">Ranking mode</label>
+                  <select id="search-mode" class="input" style="min-height:0;padding:10px 14px">
+                    <option value="lexical">lexical — BM25 (default)</option>
+                    <option value="semantic">semantic — embeddings</option>
+                    <option value="hybrid">hybrid — BM25 + embeddings</option>
+                  </select>
                   <div class="btn-row">
                     <button type="button" class="btn btn--outline" id="search-run">Search</button>
                   </div>
@@ -219,6 +225,17 @@ Ask about my grandmother's sourdough recipe.</textarea>
                     <button type="button" class="btn btn--outline btn--sm" id="context-copy" data-copy="" hidden>Copy</button>
                   </div>
                   <p class="status" id="context-status" role="status" aria-live="polite">Import something, then build a pack.</p>
+                </div>
+
+                <div class="card">
+                  <h3>6 · Semantic recall</h3>
+                  <p class="muted">Rank cells by meaning, not just exact words. The model is self-hosted on this site (about 23 MB, downloaded once), runs entirely in your browser, and no memory or query ever leaves the machine.</p>
+                  <p class="field">On-device model</p>
+                  <div class="btn-row">
+                    <button type="button" class="btn btn--primary" id="model-load">Load on-device model</button>
+                  </div>
+                  <p class="status" id="model-status" role="status" aria-live="polite">Model not loaded. Lexical BM25 search works without it.</p>
+                  <p class="muted">Embeddings are rebuilt in the background after an import, a forget, or an opened vault. They never leave this tab and are never written to a vault.</p>
                 </div>
 
               </div>
@@ -457,7 +474,17 @@ Ask about my grandmother's sourdough recipe.</textarea>
   "use strict";
 
   var K = window.Keepsake;
-  var state = { cells: [], hits: [] };
+  var state = {
+    cells: [],
+    hits: [],
+    embed: null,
+    embedDim: 0,
+    vectors: [],
+    vectorsStale: true,
+    loadingModel: false
+  };
+  var SMALL_VAULT_SIZE = 200;
+  var embedGeneration = 0;
 
   function $(id) {
     return document.getElementById(id);
@@ -554,7 +581,9 @@ Ask about my grandmother's sourdough recipe.</textarea>
     }
     state.hits.forEach(function (hit) {
       var tr = make("tr");
-      tr.appendChild(make("td", "mono", hit.score.toFixed(3)));
+      var scoreText = hit.score.toFixed(3);
+      if (hit.mode && hit.mode !== "lexical") scoreText = hit.mode + " · " + scoreText;
+      tr.appendChild(make("td", "mono", scoreText));
       tr.appendChild(make("td", null, hit.cell.source));
       tr.appendChild(make("td", null, hit.cell.role));
       tr.appendChild(make("td", "mono", hit.cell.createdAt));
@@ -586,6 +615,103 @@ Ask about my grandmother's sourdough recipe.</textarea>
     return renderIntegrity();
   }
 
+  function currentMode() {
+    var select = $("search-mode");
+    return select ? select.value : "lexical";
+  }
+
+  function embedText(text) {
+    return state.embed(text, { pooling: "mean", normalize: true }).then(function (output) {
+      return Array.from(output.data);
+    });
+  }
+
+  function updateModelStatus() {
+    if (!state.embed) return;
+    var status = $("model-status");
+    if (state.vectorsStale) {
+      setStatus(status, "Model ready · " + state.embedDim + "-dim · " + state.cells.length + " cell(s) pending embedding.");
+    } else {
+      setStatus(status, "Model ready · " + state.embedDim + "-dim vectors · " + state.vectors.length + " cell(s) embedded.");
+    }
+  }
+
+  function ensureEmbeddings() {
+    if (!state.embed) return Promise.resolve(false);
+    if (!state.vectorsStale && state.vectors.length === state.cells.length) {
+      return Promise.resolve(true);
+    }
+    var generation = ++embedGeneration;
+    state.vectorsStale = false;
+    var snapshot = state.cells.slice();
+    var vectors = new Array(snapshot.length);
+    var chain = Promise.resolve();
+    snapshot.forEach(function (cell, index) {
+      chain = chain.then(function () {
+        return embedText(cell.text).then(function (vector) {
+          vectors[index] = vector;
+        });
+      });
+    });
+    return chain.then(function () {
+      if (generation !== embedGeneration) return false;
+      state.vectors = vectors;
+      state.vectorsStale = false;
+      updateModelStatus();
+      return true;
+    }).catch(function (error) {
+      if (generation !== embedGeneration) return false;
+      state.vectorsStale = true;
+      setStatus($("model-status"), "Embedding failed: " + (error && error.message ? error.message : error) + " Lexical search still works.", "error");
+      return false;
+    });
+  }
+
+  function afterCellsChanged() {
+    state.vectorsStale = true;
+    if (!state.embed) return;
+    if (state.cells.length === 0) {
+      state.vectors = [];
+      state.vectorsStale = false;
+      updateModelStatus();
+      return;
+    }
+    if (state.cells.length <= SMALL_VAULT_SIZE) {
+      ensureEmbeddings().catch(function () {});
+    } else {
+      updateModelStatus();
+    }
+  }
+
+  function loadModel() {
+    if (state.loadingModel || state.embed) return;
+    var status = $("model-status");
+    state.loadingModel = true;
+    setStatus(status, "Loading the on-device model… about 23 MB, downloaded once and cached.");
+    import("./assets/vendor/transformers.min.js").then(function (mod) {
+      mod.env.allowLocalModels = true;
+      mod.env.allowRemoteModels = false;
+      mod.env.localModelPath = new URL("./models/", document.baseURI).href;
+      mod.env.backends.onnx.wasm.wasmPaths = new URL("./wasm/", document.baseURI).href;
+      return mod.pipeline("feature-extraction", "Xenova/all-MiniLM-L6-v2", { dtype: "q8" });
+    }).then(function (embed) {
+      state.embed = embed;
+      return embed("dimension", { pooling: "mean", normalize: true });
+    }).then(function (probe) {
+      var dims = probe && probe.dims ? probe.dims : [];
+      state.embedDim = dims.length > 0 ? dims[dims.length - 1] : 0;
+      state.loadingModel = false;
+      state.vectorsStale = true;
+      return ensureEmbeddings();
+    }).then(function () {
+      updateModelStatus();
+    }).catch(function (error) {
+      state.loadingModel = false;
+      state.embed = null;
+      setStatus(status, "Could not load the on-device model: " + (error && error.message ? error.message : error) + " Lexical search still works.", "error");
+    });
+  }
+
   function runImport() {
     clearError();
     var fileInput = $("import-file");
@@ -608,6 +734,7 @@ Ask about my grandmother's sourdough recipe.</textarea>
           state.cells = state.cells.concat(packed);
           state.hits = [];
           $("hits-empty").textContent = "No search run yet.";
+          afterCellsChanged();
           return renderAll().then(function () {
             setStatus($("import-status"), "Imported " + packed.length + " cell(s) from a verified memory pack.");
           });
@@ -634,6 +761,7 @@ Ask about my grandmother's sourdough recipe.</textarea>
       state.cells = state.cells.concat(made);
       state.hits = [];
       $("hits-empty").textContent = "No search run yet.";
+      afterCellsChanged();
       return renderAll().then(function () {
         setStatus($("import-status"), "Imported " + made.length + " cell(s) from " + source + ".");
       });
@@ -644,6 +772,7 @@ Ask about my grandmother's sourdough recipe.</textarea>
 
   function runSearch() {
     var query = $("search-query").value;
+    var mode = currentMode();
     if (query.trim().length === 0) {
       state.hits = [];
       renderHits();
@@ -651,11 +780,64 @@ Ask about my grandmother's sourdough recipe.</textarea>
       setStatus($("search-status"), "Exact, lexical recall over your cells.");
       return;
     }
-    state.hits = K.bm25(state.cells, query, { limit: 10 });
-    renderHits();
-    var label = state.hits.length === 1 ? "1 match." : state.hits.length + " matches.";
-    $("hits-empty").textContent = state.hits.length === 0 ? "No cells matched “" + query + "”." : "No search run yet.";
-    setStatus($("search-status"), label);
+    if (mode === "lexical" || !state.embed) {
+      state.hits = K.bm25(state.cells, query, { limit: 10 });
+      renderHits();
+      var label = state.hits.length === 1 ? "1 match." : state.hits.length + " matches.";
+      $("hits-empty").textContent = state.hits.length === 0 ? "No cells matched “" + query + "”." : "No search run yet.";
+      if (mode !== "lexical") {
+        setStatus($("search-status"), label + " The model is not loaded, so this fell back to lexical BM25.");
+      } else {
+        setStatus($("search-status"), label);
+      }
+      return;
+    }
+    setStatus($("search-status"), "Embedding the query…");
+    ensureEmbeddings().then(function (ready) {
+      if (!ready) {
+        state.hits = K.bm25(state.cells, query, { limit: 10 });
+        renderHits();
+        $("hits-empty").textContent = state.hits.length === 0 ? "No cells matched “" + query + "”." : "No search run yet.";
+        setStatus($("search-status"), "Could not embed, so this fell back to lexical BM25.", "error");
+        return null;
+      }
+      return embedText(query).then(function (queryVector) {
+        var ranked;
+        if (mode === "semantic") {
+          ranked = K.rankVectors(state.vectors, queryVector, 10);
+        } else {
+          var byId = {};
+          state.cells.forEach(function (cell, index) {
+            byId[cell.id] = index;
+          });
+          var lexicalScores = state.cells.map(function () {
+            return 0;
+          });
+          K.bm25(state.cells, query, { limit: state.cells.length }).forEach(function (hit) {
+            var index = byId[hit.cell.id];
+            if (typeof index === "number") lexicalScores[index] = hit.score;
+          });
+          var semanticScores = state.vectors.map(function (vector) {
+            return K.cosine(vector, queryVector);
+          });
+          ranked = K.hybridRank(lexicalScores, semanticScores, { alpha: 0.5, limit: 10 });
+        }
+        state.hits = ranked.map(function (hit) {
+          return { cell: state.cells[hit.index], score: hit.score, mode: mode };
+        }).filter(function (hit) {
+          return hit.cell;
+        });
+        renderHits();
+        var label = state.hits.length === 1 ? "1 match." : state.hits.length + " matches.";
+        $("hits-empty").textContent = state.hits.length === 0 ? "No cells matched “" + query + "”." : "No search run yet.";
+        setStatus($("search-status"), label + " " + (mode === "hybrid" ? "Hybrid" : "Semantic") + " ranking over " + state.vectors.length + " embedding(s).");
+        return null;
+      });
+    }).catch(function (error) {
+      state.hits = K.bm25(state.cells, query, { limit: 10 });
+      renderHits();
+      setStatus($("search-status"), "Semantic search failed: " + (error && error.message ? error.message : error) + " Fell back to lexical BM25.", "error");
+    });
   }
 
   function runContext() {
@@ -697,6 +879,7 @@ Ask about my grandmother's sourdough recipe.</textarea>
     state.cells = result.kept;
     state.hits = [];
     $("hits-empty").textContent = "No search run yet.";
+    afterCellsChanged();
     renderAll();
     if ($("search-query").value.trim().length > 0) runSearch();
     setStatus($("forget-status"), "Forgot " + result.removed.length + " cell(s); " + state.cells.length + " remain.");
@@ -751,6 +934,7 @@ Ask about my grandmother's sourdough recipe.</textarea>
         state.cells = opened;
         state.hits = [];
         $("hits-empty").textContent = "No search run yet.";
+        afterCellsChanged();
         return renderAll().then(function () {
           var summary = K.vaultSummary(parsed);
           setStatus($("open-status"), "Opened " + opened.length + " cell(s) · merkle " + summary.merkle.slice(0, 16) + "…");
@@ -800,10 +984,13 @@ Ask about my grandmother's sourdough recipe.</textarea>
     $("forget-query").value = "";
     setStatus($("forget-status"), "No cells forgotten.");
     setStatus($("pack-status"), "No memory pack downloaded yet.");
+    afterCellsChanged();
     renderAll();
   });
   $("search-run").addEventListener("click", runSearch);
   $("search-query").addEventListener("input", runSearch);
+  $("search-mode").addEventListener("change", runSearch);
+  $("model-load").addEventListener("click", loadModel);
   $("seal-run").addEventListener("click", sealVault);
   $("pack-run").addEventListener("click", downloadPack);
   $("open-run").addEventListener("click", openVault);

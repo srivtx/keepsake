@@ -6,6 +6,25 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-20
+
+### Added
+
+- On-device semantic recall in the browser app: a self-hosted Transformers.js
+  build, the `Xenova/all-MiniLM-L6-v2` model at `q8`, and the ONNX Runtime Web
+  WASM binaries. 384-dimension embeddings are computed locally and never leave
+  the machine.
+- Three search modes in the app: `lexical` (BM25, default), `semantic` (cosine),
+  and `hybrid` (a blend).
+- Core vector math: `cosine`, `rankVectors`, and `hybridRank`.
+
+### Note
+
+- The CLI and MCP server stay lexical. Embeddings are computed at query time and
+  are never written to the vault, so cell hashes and the Merkle root are
+  unchanged.
+
+
 ## [0.4.0] - 2026-09-20
 
 ### Added
@@ -67,7 +86,8 @@ All notable changes to this project are documented here. The format is based on
 - Import parsers that turn chat exports and notes into cells.
 - `install.sh`, a one-line installer for the `keepsake` binary.
 
-[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/srivtx/keepsake/releases/tag/v0.5.0
 [0.4.0]: https://github.com/srivtx/keepsake/releases/tag/v0.4.0
 [0.3.0]: https://github.com/srivtx/keepsake/releases/tag/v0.3.0
 [0.2.0]: https://github.com/srivtx/keepsake/releases/tag/v0.2.0

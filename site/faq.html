@@ -104,7 +104,15 @@
           </details>
           <details>
             <summary>Is this semantic memory? Does it use embeddings?</summary>
-            <div class="faq__body"><p>No. Version 0.1 has no embeddings, no vector search, and no model inference. Recall is exact and lexical, using BM25 over the plaintext cells. Semantic recall is on the roadmap as an optional layer that would not change the vault format.</p></div>
+            <div class="faq__body"><p>Not in the format. The <code>keepsake/v1</code> container has no embeddings, vector search, or model inference, and the CLI and MCP server recall exactly and lexically, using BM25 over the plaintext cells. The browser app can optionally layer real on-device semantic recall over the same cells without changing the vault; nothing is embedded until you load the model.</p></div>
+          </details>
+          <details>
+            <summary>Does my memory get sent anywhere for semantic search?</summary>
+            <div class="faq__body"><p>No. The embedding model is self-hosted and runs in your browser, so the embeddings are computed on your machine. No memory text, query, or embedding is sent anywhere, and the page makes no network requests.</p></div>
+          </details>
+          <details>
+            <summary>Why does the site include a 23 MB model?</summary>
+            <div class="faq__body"><p>It is the optional on-device semantic recall model (<code>Xenova/all-MiniLM-L6-v2</code>, quantized). Nothing runs unless you click <strong>Load on-device model</strong>, and when you do it runs locally in the tab. The site self-hosts the model along with the Transformers.js runtime and the ONNX Runtime Web WASM binaries, so it stays fully offline.</p></div>
           </details>
           <details>
             <summary>Does it sync across devices?</summary>
@@ -142,7 +150,7 @@
 
         <h2>Honest limits</h2>
         <div class="callout" role="note">
-          <p>Version 0.1 has no semantic recall and no sync; the context pack is a lexical projection, not embeddings. <code>keepsake rotate</code> re-encrypts a vault under a new passphrase, but there is no in-place re-wrap. It is not a formal audit, and it does not pad the plaintext, so the ciphertext length approximates the plaintext length. Import is lossy by design: it records text and metadata, not attachments, images, or tool calls.</p>
+          <p>The <code>keepsake/v1</code> format and the CLI and MCP server are lexical, not semantic; the browser app's on-device semantic recall is optional and off until you load the model. Version 0.1 has no sync; the context pack is a lexical projection, not embeddings. <code>keepsake rotate</code> re-encrypts a vault under a new passphrase, but there is no in-place re-wrap. It is not a formal audit, and it does not pad the plaintext, so the ciphertext length approximates the plaintext length. Import is lossy by design: it records text and metadata, not attachments, images, or tool calls.</p>
         </div>
 
         <h2>Security posture</h2>

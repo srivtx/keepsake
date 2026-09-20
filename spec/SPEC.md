@@ -308,6 +308,13 @@ observer of the file sees every cell. A pack is integrity-checked by the
 per-cell hashes and the Merkle root it carries, and an implementation MUST verify
 those before importing a pack; a pack that does not verify MUST be rejected.
 
+A **semantic index** is a client-side retrieval feature, not part of the
+container. An implementation MAY embed cells locally and rank them by cosine
+similarity, but embeddings are never written to the vault: the cell hashes, the
+canonical plaintext, and the Merkle root are unaffected, so a `keepsake/v1` vault
+is identical whether or not such an index exists. This does not make the format
+semantic; the CLI and MCP server remain lexical.
+
 ## Key derivation and encryption
 
 Sealing and opening use only standard primitives.

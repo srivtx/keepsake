@@ -183,6 +183,9 @@
         <h2>Browser app</h2>
         <p>The <a href="index.html#app">landing page</a> runs the same import, search, seal, and open operations in the tab, with no upload. See the <a href="conformance.html">conformance page</a> to run the published vectors in your browser.</p>
 
+        <h3>Semantic recall</h3>
+        <p>The browser app can optionally run a real embedding model in the tab. After you click <strong>Load on-device model</strong>, it embeds every cell locally (384 dimensions, mean-pooled and normalized) and search gains three modes: <code>lexical</code> (BM25, the default), <code>semantic</code> (cosine over the on-device embeddings), and <code>hybrid</code> (a blend of both). The model is self-hosted and runs entirely in the browser, so no memory or query leaves the machine and no external requests are made. Loading it adds about 45 MB of one-time static assets; the feature is optional, and the app works without it. The CLI and the MCP server stay lexical (BM25).</p>
+
         <div class="docs__foot">
           <a href="spec.html">← Spec</a>
           <a href="conformance.html">Conformance →</a>

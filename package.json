@@ -1,6 +1,6 @@
 {
   "name": "keepsake",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Own your AI memory. Import an export or your notes, search it locally, seal it into an encrypted portable .keepsake vault, and let any agent recall it over MCP.",
   "type": "module",
   "author": "svx",
