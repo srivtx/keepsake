@@ -165,7 +165,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: srivtx/keepsake@v0.2.0
+      - uses: srivtx/keepsake@v0.3.0
         with:
           vault: memory.keepsake
           passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
@@ -175,11 +175,11 @@ Pass the passphrase as a repository secret, never a literal string. The action
 defaults to `version: main`; pin it to a tag to match the release you run:
 
 ```yaml
-      - uses: srivtx/keepsake@v0.2.0
+      - uses: srivtx/keepsake@v0.3.0
         with:
           vault: memory.keepsake
           passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
-          version: v0.2.0
+          version: v0.3.0
 ```
 
 ## The format in brief
