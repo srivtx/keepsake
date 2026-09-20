@@ -134,6 +134,10 @@
             <summary>What is a context pack?</summary>
             <div class="faq__body"><p>A token-budgeted Markdown digest of the cells most relevant to a task, printed by <code>keepsake context</code> and exposed to agents as the <code>memory_context</code> MCP tool. It is a transient projection: it is built on demand from the decrypted cells and is never written into the vault or committed to the format. It is lexical recall, not semantic, and discarding it leaves the vault unchanged.</p></div>
           </details>
+          <details>
+            <summary>What is a memory pack and is it safe to share?</summary>
+            <div class="faq__body"><p>A memory pack is a plaintext Markdown file that carries a vault's cells losslessly. <code>keepsake pack</code> writes one from a vault, and <code>keepsake unpack</code> verifies its per-cell hashes and Merkle root before sealing it into a new vault. It is agent-readable and integrity-checked, but it is not encrypted: anyone who has the file can read every memory. Treat it as plaintext, and encrypt or omit sensitive cells before sharing.</p></div>
+          </details>
         </div>
 
         <h2>Honest limits</h2>

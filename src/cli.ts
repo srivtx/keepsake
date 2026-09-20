@@ -11,12 +11,14 @@ import {
   encryptVault,
   forgetCells,
   formatConformance,
+  fromBundle,
   makeCell,
   memoryStats,
   mergeCells,
   normalizeImport,
   rotateVault,
   runConformance,
+  toBundle,
   vaultSummary,
 } from "./index.ts";
 import type { Vectors } from "./index.ts";
@@ -34,6 +36,8 @@ export type Command =
   | "rotate"
   | "diff"
   | "context"
+  | "pack"
+  | "unpack"
   | "conformance"
   | "mcp";
 
@@ -67,6 +71,8 @@ const COMMANDS: Command[] = [
   "rotate",
   "diff",
   "context",
+  "pack",
+  "unpack",
   "conformance",
   "mcp",
 ];
@@ -103,6 +109,8 @@ Usage:
   keepsake merge <a> <b>    --out <vault>
   keepsake diff <a> <b>
   keepsake rotate           --vault <vault>
+  keepsake pack             --vault <vault> [--out <pack.md>]
+  keepsake unpack <pack.md> [--out <vault>]
   keepsake conformance      [--vectors <vectors.json>] [--json]
   keepsake mcp              --vault <vault>
 
@@ -506,6 +514,48 @@ export async function run(argv: string[]): Promise<number> {
         return 0;
       }
 
+      case "pack": {
+        const cells = await decryptVault(await readJson(requireVault(opts)), passphrase());
+        const out = opts.out ?? "memory-pack.md";
+        const bundle = await toBundle(cells);
+        await Bun.write(out, bundle);
+        if (opts.json) {
+          console.log(JSON.stringify({ out, cells: cells.length }, null, 2));
+        } else {
+          console.log(`packed ${cells.length} cell(s) into ${out} (plaintext, not encrypted)`);
+        }
+        return 0;
+      }
+
+      case "unpack": {
+        if (opts.files.length === 0) throw new Error("unpack needs a pack file");
+        const source = opts.files[0]!;
+        let text: string;
+        try {
+          text = await Bun.file(source).text();
+        } catch (err) {
+          throw new Error(`cannot read ${source}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        const cells = await fromBundle(text);
+        if (cells.length === 0) {
+          console.error("keepsake: the pack contains no cells");
+          return 1;
+        }
+        const out = opts.out ?? "keepsake.keepsake";
+        const vault = await encryptVault(
+          cells,
+          passphrase(),
+          opts.iterations === null ? {} : { iterations: opts.iterations },
+        );
+        await writeVault(out, vault);
+        if (opts.json) {
+          console.log(JSON.stringify({ out, cells: cells.length }, null, 2));
+        } else {
+          console.log(`unpacked ${cells.length} cell(s) into ${out}`);
+        }
+        return 0;
+      }
+
       case "conformance": {
         const path =
           opts.vectors ?? fileURLToPath(new URL("../spec/vectors.json", import.meta.url));
@@ -542,9 +592,9 @@ export async function run(argv: string[]): Promise<number> {
     const message = err instanceof Error ? err.message : String(err);
     const line = message.startsWith("keepsake:") ? message : `keepsake: ${message}`;
     console.error(line);
-    if (/wrong passphrase|corrupt vault/.test(message)) return 1;
+    if (/wrong passphrase|corrupt vault|not a memory pack/.test(message)) return 1;
     if (
-      /(needs at least one file|needs a query|needs a task|needs two vault files|requires --out|needs KEEPSAKE_NEW_PASSPHRASE|--vault is required|no passphrase|is not valid JSON|unknown option|requires a value|requires a number)/.test(
+      /(needs at least one file|needs a pack file|needs a query|needs a task|needs two vault files|requires --out|needs KEEPSAKE_NEW_PASSPHRASE|--vault is required|no passphrase|is not valid JSON|unknown option|requires a value|requires a number)/.test(
         message,
       )
     ) {

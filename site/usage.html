@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Usage — keepsake</title>
-<meta name="description" content="Install keepsake, the CLI commands (import, search, export, verify, stats, mcp, merge, forget, rotate, diff, context, conformance), the passphrase environment rule, exit codes, and the MCP server configuration.">
+<meta name="description" content="Install keepsake, the CLI commands (import, search, export, verify, stats, mcp, merge, forget, rotate, diff, context, pack, unpack, conformance), the passphrase environment rule, exit codes, and the MCP server configuration.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
@@ -99,7 +99,7 @@
         </div>
 
         <h2>Commands</h2>
-        <p>Eleven commands, all local. Every command that touches a vault reads the passphrase from the environment, never from a flag.</p>
+        <p>Thirteen commands, all local. Every command that touches a vault reads the passphrase from the environment, never from a flag.</p>
         <div class="table-wrap">
           <table>
             <caption>keepsake commands.</caption>
@@ -118,11 +118,14 @@
               <tr><td><code>rotate</code></td><td>Re-encrypt a vault under a new passphrase, preserving the cells.</td></tr>
               <tr><td><code>diff &lt;vault…&gt;</code></td><td>Compare two vaults and report the cells that were added, removed, or changed.</td></tr>
               <tr><td><code>context &lt;task&gt;</code></td><td>Print a token-budgeted Markdown context pack for a task. It is generated on demand and never stored in the vault.</td></tr>
+              <tr><td><code>pack</code></td><td>Decrypt a vault and write a plaintext memory pack: one Markdown file that carries the same cells losslessly, for moving memory between tools or handing it to an agent.</td></tr>
+              <tr><td><code>unpack &lt;pack.md&gt;</code></td><td>Verify a memory pack's per-cell hashes and Merkle root and seal it into a new vault. Exits <code>1</code> if the pack does not verify.</td></tr>
               <tr><td><code>conformance</code></td><td>Run the published conformance vectors (L1 parse, L2 integrity, L3 crypto round-trip) against this implementation. Exit 1 if any check fails, so any implementation can be tested in CI.</td></tr>
             </tbody>
           </table>
         </div>
         <p>Import reads ChatGPT exports, Claude <code>conversations.json</code>, JSONL transcripts, JSON message arrays, and plain text or notes.</p>
+        <p>A memory pack is plaintext, not encrypted: anyone who has the file can read every cell, so treat it as you would the raw text and share it only where that is intended.</p>
 
         <h2>Examples</h2>
         <div class="term" aria-label="Example commands">

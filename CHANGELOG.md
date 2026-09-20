@@ -6,6 +6,17 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-20
+
+### Added
+
+- Memory packs: `keepsake pack` writes a lossless, plaintext, agent-readable
+  Markdown projection of a vault, and `keepsake unpack` verifies its per-cell
+  hashes and Merkle root before sealing it into a new vault.
+- `toBundle`, `fromBundle`, and `isBundle` in the library; the browser app gains
+  a pack download and imports a pack with integrity verification.
+
+
 ## [0.3.0] - 2026-09-20
 
 ### Added
@@ -56,7 +67,8 @@ All notable changes to this project are documented here. The format is based on
 - Import parsers that turn chat exports and notes into cells.
 - `install.sh`, a one-line installer for the `keepsake` binary.
 
-[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/srivtx/keepsake/releases/tag/v0.4.0
 [0.3.0]: https://github.com/srivtx/keepsake/releases/tag/v0.3.0
 [0.2.0]: https://github.com/srivtx/keepsake/releases/tag/v0.2.0
 [0.1.0]: https://github.com/srivtx/keepsake/releases/tag/v0.1.0

@@ -34,3 +34,4 @@ export { mergeCells, forgetCells, rotateVault, diffVaults } from "./vault-ops.ts
 export type { ForgetResult, ForgetSelector, RotateOptions, VaultDiff } from "./vault-ops.ts";
 export { contextPack } from "./context.ts";
 export type { ContextPack, ContextPackOptions } from "./context.ts";
+export { toBundle, fromBundle, isBundle } from "./interchange.ts";

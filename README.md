@@ -103,6 +103,10 @@ keepsake diff memory.keepsake archive.keepsake
 # Print a token-budgeted Markdown context pack for a task
 keepsake context "plan the migration" --vault memory.keepsake --budget 1500
 
+# Decrypt a vault into a plaintext memory pack, or seal a pack back into a vault
+keepsake pack --vault memory.keepsake --out memory.md
+keepsake unpack memory.md --out restored.keepsake
+
 # Run the published conformance vectors against this implementation
 keepsake conformance
 
@@ -148,6 +152,28 @@ write. `memory_context` returns the same token-budgeted pack as the CLI, and
 passphrase on startup. It makes no network calls: the vault is opened
 in-process.
 
+## Move your memory between tools
+
+A vault and a pack are two projections of the same cells. The **vault** is the
+encrypted on-disk file (`.keepsake`): AES-256-GCM under PBKDF2-SHA256, with a
+Merkle root committing to the plaintext. The **memory pack** is a plaintext
+interchange file: a single Markdown document that carries the exact same cells
+losslessly, so a human or an LLM can read it and any tool can move it. A pack is
+not encrypted.
+
+```bash
+# Decrypt a vault into a plaintext memory pack
+keepsake pack --vault memory.keepsake --out memory.md
+
+# Verify a pack's hashes and Merkle root, then seal it into a new vault
+keepsake unpack memory.md --out restored.keepsake
+```
+
+Both commands read the passphrase from `KEEPSAKE_PASSPHRASE`. `unpack` checks the
+pack's per-cell hashes and Merkle root before sealing and exits `1` if the pack
+does not verify. Because a pack is plaintext, anyone who has the file can read
+every cell; share it only where that is intended.
+
 ## Verify a vault in CI
 
 Commit a `.keepsake` vault and let CI prove it still opens and checks out. The
@@ -165,7 +191,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: srivtx/keepsake@v0.3.0
+      - uses: srivtx/keepsake@v0.4.0
         with:
           vault: memory.keepsake
           passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
@@ -175,11 +201,11 @@ Pass the passphrase as a repository secret, never a literal string. The action
 defaults to `version: main`; pin it to a tag to match the release you run:
 
 ```yaml
-      - uses: srivtx/keepsake@v0.3.0
+      - uses: srivtx/keepsake@v0.4.0
         with:
           vault: memory.keepsake
           passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
-          version: v0.3.0
+          version: v0.4.0
 ```
 
 ## The format in brief

@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, writeFileSync, existsSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
@@ -170,6 +170,24 @@ describe("keepsake cli", () => {
     expect(result.code).toBe(0);
     expect(run(["search", "staging", "--vault", target]).code).toBe(1);
     expect(run(["search", "deploys", "--vault", target]).code).toBe(0);
+  });
+
+  test("pack writes a plaintext memory pack and unpack restores it", () => {
+    const packPath = join(workdir, "memory-pack.md");
+    const restored = join(workdir, "unpacked.keepsake");
+    expect(run(["pack", "--vault", vault, "--out", packPath]).code).toBe(0);
+    const pack = readFileSync(packPath, "utf8");
+    expect(pack).toContain("# keepsake memory pack");
+    expect(pack).toContain("<!-- keepsake:data -->");
+    expect(run(["unpack", packPath, "--out", restored]).code).toBe(0);
+    const stats = run(["stats", "--vault", restored, "--json"]);
+    expect((JSON.parse(stats.out) as { count: number }).count).toBe(2);
+  });
+
+  test("unpack rejects a tampered pack", () => {
+    const packPath = join(workdir, "tampered-pack.md");
+    writeFileSync(packPath, "---\nkind: memory-pack\n---\n<!-- keepsake:data -->\n```json\n[]\n```\n<!-- /keepsake:data -->\n");
+    expect(run(["unpack", packPath, "--out", join(workdir, "nope.keepsake")]).code).toBe(1);
   });
 
   test("merge unions two vaults", () => {

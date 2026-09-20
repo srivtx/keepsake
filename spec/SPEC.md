@@ -301,6 +301,13 @@ is not stored in the container and does not appear in the plaintext array; any
 implementation may choose its own budget and framing without affecting
 conformance.
 
+A **memory pack** is a transport projection, not a vault. It is a single
+plaintext Markdown file that carries the same cells losslessly, in a form a human
+or an LLM can read and any implementation can import. It is not encrypted: an
+observer of the file sees every cell. A pack is integrity-checked by the
+per-cell hashes and the Merkle root it carries, and an implementation MUST verify
+those before importing a pack; a pack that does not verify MUST be rejected.
+
 ## Key derivation and encryption
 
 Sealing and opening use only standard primitives.
