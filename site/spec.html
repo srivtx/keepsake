@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spec — keepsake</title>
+<meta name="description" content="The normative keepsake/v1 format: the Cell, canonical JSON, SHA-256 hashing, the Merkle root, the vault container, KDF and AEAD parameters, import rules, and conformance levels.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Spec — keepsake">
+<meta property="og:description" content="The normative keepsake/v1 format: the Cell, canonical JSON, hashing, the Merkle root, the vault container, KDF and AEAD parameters, import rules, and conformance levels.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/spec.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Spec — keepsake">
+<meta name="twitter:description" content="The normative keepsake/v1 format for personal AI memory.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/spec.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c026d3'/%3E%3Crect x='8.2' y='7.2' width='15.6' height='17.6' rx='3.2' fill='none' stroke='white' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='14' r='2.2' fill='white'/%3E%3Cpath d='M16 15.6V19' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 32 32" focusable="false">
+          <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+          <circle cx="16" cy="14" r="2.6"></circle>
+          <path d="M16 16.3V20.5"></path>
+        </svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">portable AI memory</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html" aria-current="page">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Format · keepsake/v1</p>
+          <h1>The keepsake/v1 format</h1>
+          <p>keepsake is an open, encrypted, portable format for personal AI memory. A memory is a Cell; a Vault is a single JSON file that holds any number of cells, sealed with authenticated encryption, plus a Merkle root that commits to the exact plaintext. There is no server, no account, and no network call.</p>
+        </div>
+
+        <h2>Abstract</h2>
+        <p>This document specifies the wire format, the canonical encoding, the hashing and Merkle rules, the key-derivation and encryption parameters, import rules, and three conformance levels. Everything here is normative unless marked otherwise. The format identifier is exactly <code>keepsake/v1</code>.</p>
+
+        <h2>Goals</h2>
+        <ul>
+          <li><strong>Ownership.</strong> A vault is one file the user can copy, back up, and carry between tools. No vendor holds the only copy.</li>
+          <li><strong>Portability.</strong> The format is self-describing JSON with documented algorithms, so any implementation can read it without the reference code.</li>
+          <li><strong>Confidentiality.</strong> The plaintext never touches disk unencrypted by default; the vault leaks only a small, documented amount of metadata.</li>
+          <li><strong>Integrity.</strong> A vault detects any change to the ciphertext, and a cell hash and Merkle root detect any change to the plaintext.</li>
+          <li><strong>Determinism.</strong> Two implementations given the same cells, passphrase, salt, and IV produce byte-identical plaintext and ciphertext.</li>
+        </ul>
+
+        <h2>Non-goals</h2>
+        <ul>
+          <li>Not a semantic memory. Version 0.1 has no embeddings, vector search, or model inference. Recall is exact and lexical.</li>
+          <li>Not a sync protocol. Version 0.1 defines a file, not a service or a multi-writer merge.</li>
+          <li>Not a key-management system. Version 0.1 has no key rotation, no escrow, and no recovery path.</li>
+          <li>Not an access-control system. Anyone with the file and the passphrase has the full plaintext.</li>
+          <li>Not a general archive format. It stores cells, not files or arbitrary blobs.</li>
+        </ul>
+
+        <h2>Terminology</h2>
+        <div class="table-wrap">
+          <table>
+            <caption>The words this specification uses in a precise sense.</caption>
+            <thead>
+              <tr><th scope="col">Term</th><th scope="col">Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Cell</strong></td><td>One unit of memory: an id, text, source, role, timestamp, tags, and a content hash.</td></tr>
+              <tr><td><strong>Payload</strong></td><td>A cell without its <code>hash</code> field: the six fields that are hashed.</td></tr>
+              <tr><td><strong>Vault</strong></td><td>The sealed file defined here, with the <code>.keepsake</code> extension by convention.</td></tr>
+              <tr><td><strong>canonical JSON</strong></td><td>The deterministic JSON encoding defined below.</td></tr>
+              <tr><td><strong>Merkle root</strong></td><td>A single SHA-256 hash that commits to the vault's cell hashes, independent of cell order.</td></tr>
+              <tr><td><strong>KDF</strong></td><td>Key-derivation function; here always PBKDF2-SHA256.</td></tr>
+              <tr><td><strong>AEAD</strong></td><td>Authenticated encryption with associated data; here always AES-256-GCM.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>The Cell</h2>
+        <p>A cell is a JSON object with exactly seven members.</p>
+        <pre class="code"><code>{
+  "id": "3f7c9d2e-1a4b-4c8d-9e0f-1a2b3c4d5e6f",
+  "text": "I want to move my chat history out of the cloud.",
+  "source": "chatgpt-export",
+  "role": "user",
+  "createdAt": "2026-01-05T09:12:00.000Z",
+  "tags": ["privacy", "memory"],
+  "hash": "32003353cb5403744610e2570bd435030b4aaa5d930e272c8723a382f7526516"
+}</code></pre>
+        <div class="table-wrap">
+          <table>
+            <caption>Cell members and their rules.</caption>
+            <thead>
+              <tr><th scope="col">Member</th><th scope="col">Type</th><th scope="col">Rules</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>id</code></td><td>string</td><td>A UUID, canonical lowercase hyphenated form (<code>8-4-4-4-12</code>). Version 4 is recommended for generated ids. Unique within a vault.</td></tr>
+              <tr><td><code>text</code></td><td>string</td><td>The cell content. UTF-8. MUST be non-empty after trimming. Imports MUST normalize to NFC and trim surrounding whitespace.</td></tr>
+              <tr><td><code>source</code></td><td>string</td><td>A stable, human-meaningful identifier such as <code>chatgpt-export</code> or <code>notes.md</code>. MUST be non-empty. MUST NOT contain an absolute path or machine-local identifier.</td></tr>
+              <tr><td><code>role</code></td><td>string</td><td>One of <code>user</code>, <code>assistant</code>, <code>note</code>, <code>system</code>. Case-sensitive.</td></tr>
+              <tr><td><code>createdAt</code></td><td>string</td><td>An ISO 8601 timestamp in UTC with millisecond precision, exactly <code>YYYY-MM-DDTHH:MM:SS.sssZ</code>.</td></tr>
+              <tr><td><code>tags</code></td><td>array of string</td><td>Zero or more tags. Each MUST be non-empty after trimming and unique within the array. Order is significant and preserved.</td></tr>
+              <tr><td><code>hash</code></td><td>string</td><td>Lowercase hex SHA-256 (64 characters) of the canonical payload.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>A cell with no tags uses an empty array, never <code>null</code> or a missing member.</p>
+
+        <h3>The canonical payload</h3>
+        <p>The canonical payload of a cell is its six members other than <code>hash</code>: <code>{ id, text, source, role, createdAt, tags }</code>. The <code>hash</code> is <code>SHA-256(canonicalJson(payload))</code>, encoded as lowercase hex.</p>
+        <pre class="code"><code>{
+  "id": "8b1e5a7c-2d3f-4a6b-8c9d-0e1f2a3b4c5d",
+  "text": "Portable memory means one encrypted file that you control.",
+  "source": "chatgpt-export",
+  "role": "assistant",
+  "createdAt": "2026-01-05T09:12:04.000Z",
+  "tags": ["memory"]
+}</code></pre>
+        <p>Canonical JSON (keys sorted, no whitespace):</p>
+        <pre class="code code--wrap"><code>{"createdAt":"2026-01-05T09:12:04.000Z","id":"8b1e5a7c-2d3f-4a6b-8c9d-0e1f2a3b4c5d","role":"assistant","source":"chatgpt-export","tags":["memory"],"text":"Portable memory means one encrypted file that you control."}</code></pre>
+        <p>Hash:</p>
+        <pre class="code code--wrap"><code>e7aef9cdcd7d685e874fff697be0357afa79fc5b47f3c83ca57d288261128ab5</code></pre>
+
+        <h2>Canonical JSON</h2>
+        <p><code>canonicalJson(value)</code> is a deterministic encoding of a JSON value. It is the exact string that is hashed and encrypted, so every implementation must produce the same bytes.</p>
+        <ol>
+          <li><strong>Objects.</strong> Members are emitted in ascending order of their key, compared by Unicode code point. Members whose value is <code>undefined</code> are omitted. There is no insignificant whitespace.</li>
+          <li><strong>Arrays.</strong> Element order is preserved. Arrays may be empty (<code>[]</code>).</li>
+          <li><strong>Strings.</strong> Encoded with the standard JSON escapes; non-ASCII characters are emitted literally as UTF-8.</li>
+          <li><strong>Numbers.</strong> Emitted as JSON numbers with no leading zero and no trailing fraction zero. Only integers appear in the fields this format defines.</li>
+          <li><strong>Booleans and null.</strong> Emitted as <code>true</code>, <code>false</code>, and <code>null</code>.</li>
+          <li><strong>undefined.</strong> Has no JSON form. As an object member it is omitted, and as an array element it becomes <code>null</code>.</li>
+        </ol>
+        <p>The sort is over the raw key strings, not a locale-aware comparison. Reference implementation:</p>
+        <pre class="code"><code>function canonicalJson(value) {
+  if (value === null || value === undefined) return "null";
+  if (typeof value !== "object") return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  const keys = Object.keys(value).filter((k) => value[k] !== undefined).sort();
+  return `{${keys.map((k) => `${JSON.stringify(k)}:${canonicalJson(value[k])}`).join(",")}}`;
+}</code></pre>
+
+        <h2>Hashing</h2>
+        <p>SHA-256 is the only hash. It is applied to UTF-8 bytes and rendered as lowercase hex with no <code>0x</code> prefix and no separators.</p>
+        <ul>
+          <li><strong>Cell hash:</strong> <code>sha256(canonicalJson(payload))</code>.</li>
+          <li><strong>Empty hash:</strong> the SHA-256 of the empty byte string, used as the Merkle root of an empty vault.</li>
+        </ul>
+        <pre class="code code--wrap"><code>e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code></pre>
+
+        <h2>The Merkle root</h2>
+        <p>The Merkle root commits to the set of cell hashes.</p>
+        <ol>
+          <li>Take the <code>hash</code> of every cell as a lowercase hex string.</li>
+          <li>Sort the list of hex strings in ascending lexicographic order. The root does not depend on cell order in the vault.</li>
+          <li>While more than one value remains: walk the list left to right, taking adjacent pairs; for a pair <code>(left, right)</code>, compute <code>sha256(left + right)</code>, concatenating the two hex strings and hashing the ASCII text as UTF-8. If the list has an odd length, the final value is carried to the next level unchanged, not duplicated.</li>
+          <li>The single remaining value is the root, lowercase hex.</li>
+        </ol>
+        <p>An empty cell set has root <code>sha256("")</code>. Worked example using the three hashes from <a href="conformance.html">the vectors</a>:</p>
+        <pre class="code code--wrap"><code>32003353cb5403744610e2570bd435030b4aaa5d930e272c8723a382f7526516
+e7aef9cdcd7d685e874fff697be0357afa79fc5b47f3c83ca57d288261128ab5
+c2ead5e68cafbe7bb91ee118aa5ac67dffe1e3981a11ddfad2e47fe6a5d140ff</code></pre>
+        <p>Sorted, the sequence becomes <code>32003353…</code>, <code>c2ead5e6…</code>, <code>e7aef9cd…</code>. The pair <code>(32003353…, c2ead5e6…)</code> hashes to <code>7941ca79…</code>, and the odd trailing <code>e7aef9cd…</code> is carried, so the final root is:</p>
+        <pre class="code code--wrap"><code>4e540078fb922de39e689dcf86a9828e4e274986fd6fe5a03da2333724c96d2d</code></pre>
+
+        <h2>The Vault container</h2>
+        <p>A vault is a UTF-8 JSON file with exactly seven members.</p>
+        <pre class="code"><code>{
+  "format": "keepsake/v1",
+  "createdAt": "2026-03-01T12:00:00.000Z",
+  "cells": 3,
+  "kdf": {
+    "name": "PBKDF2-SHA256",
+    "iterations": 100000,
+    "salt": "AAECAwQFBgcICQoLDA0ODw=="
+  },
+  "cipher": {
+    "name": "AES-GCM",
+    "iv": "AAECAwQFBgcICQoL"
+  },
+  "ciphertext": "…base64, includes the 16-byte GCM tag…",
+  "merkle": "4e540078fb922de39e689dcf86a9828e4e274986fd6fe5a03da2333724c96d2d"
+}</code></pre>
+        <div class="table-wrap">
+          <table>
+            <caption>Vault members and their rules.</caption>
+            <thead>
+              <tr><th scope="col">Member</th><th scope="col">Type</th><th scope="col">Rules</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>format</code></td><td>string</td><td>Exactly <code>keepsake/v1</code>.</td></tr>
+              <tr><td><code>createdAt</code></td><td>string</td><td>ISO 8601 UTC with milliseconds. The time the vault was sealed. Informational.</td></tr>
+              <tr><td><code>cells</code></td><td>integer</td><td>The number of cells in the plaintext array. Non-negative. MUST equal the decrypted array length.</td></tr>
+              <tr><td><code>kdf</code></td><td>object</td><td>Key-derivation parameters, defined below.</td></tr>
+              <tr><td><code>cipher</code></td><td>object</td><td>Cipher parameters, defined below.</td></tr>
+              <tr><td><code>ciphertext</code></td><td>string</td><td>Base64 (standard alphabet, with padding) of the AEAD output: the ciphertext followed by the 16-byte GCM tag.</td></tr>
+              <tr><td><code>merkle</code></td><td>string</td><td>Lowercase hex Merkle root (64 characters) of the plaintext cells.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>The kdf object</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Member</th><th scope="col">Rules</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>name</code></td><td>Exactly <code>PBKDF2-SHA256</code>.</td></tr>
+              <tr><td><code>iterations</code></td><td>Positive integer. The default is <code>250000</code>; a reader MUST honor whatever value is present and MUST NOT silently substitute its own.</td></tr>
+              <tr><td><code>salt</code></td><td>Base64 of exactly 16 random bytes. MUST differ between vaults.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>The cipher object</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th scope="col">Member</th><th scope="col">Rules</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>name</code></td><td>Exactly <code>AES-GCM</code>.</td></tr>
+              <tr><td><code>iv</code></td><td>Base64 of exactly 12 random bytes. MUST NOT be reused under the same key.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Plaintext</h3>
+        <p>The plaintext is the canonical JSON of the cells array, where each element is a complete cell including its <code>hash</code>, encoded as UTF-8. The array preserves the cell order the sealer chose; the Merkle root does not depend on that order.</p>
+        <pre class="code code--wrap"><code>plaintext = UTF-8( canonicalJson( [ cell0, cell1, … ] ) )</code></pre>
+
+        <h2>Key derivation and encryption</h2>
+        <p>Sealing and opening use only standard primitives. Let <code>P</code> be the passphrase as UTF-8 bytes.</p>
+        <pre class="code"><code>key = PBKDF2-SHA256(password = P,
+                    salt       = base64decode(kdf.salt),
+                    iterations = kdf.iterations,
+                    dkLen      = 32)
+
+ciphertext = AES-256-GCM-Encrypt(key, iv = base64decode(cipher.iv),
+                                 plaintext, tagLength = 128)</code></pre>
+        <p>The output is the ciphertext with the 16-byte authentication tag appended, following the WebCrypto convention. No additional authenticated data is used, and the stored <code>ciphertext</code> is <code>base64(ciphertext)</code>. Opening is the inverse: derive the same key, base64-decode the IV, and decrypt. A failed GCM tag check means the file is corrupt, truncated, or the passphrase is wrong; the reader MUST report that as an error and MUST NOT emit partial plaintext.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>Parameters at a glance.</caption>
+            <thead>
+              <tr><th scope="col">Parameter</th><th scope="col">Value</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>KDF</td><td>PBKDF2-HMAC-SHA-256</td></tr>
+              <tr><td>KDF salt</td><td>16 random bytes per vault</td></tr>
+              <tr><td>KDF iterations</td><td>250000 default; reader honors the stored value</td></tr>
+              <tr><td>Derived key</td><td>256 bits (32 bytes)</td></tr>
+              <tr><td>Cipher</td><td>AES-256-GCM</td></tr>
+              <tr><td>IV</td><td>12 random bytes per encryption</td></tr>
+              <tr><td>Tag length</td><td>128 bits (16 bytes), appended to the ciphertext</td></tr>
+              <tr><td>AAD</td><td>none</td></tr>
+              <tr><td>Ciphertext encoding</td><td>Base64, standard alphabet with padding</td></tr>
+              <tr><td>Plaintext</td><td>UTF-8 canonical JSON of the cells array</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Import rules</h2>
+        <p>An importer turns a source (a chat export, a notes file, a JSONL dump) into cells. These rules keep imports deterministic and privacy-preserving.</p>
+        <ol>
+          <li><strong>One record, one cell.</strong> Each source message, note, or line becomes exactly one cell. Do not merge or split.</li>
+          <li><strong>Identity.</strong> If the source provides a stable UUID, it MAY be used. Otherwise generate a UUIDv4. Ids MUST be unique within a vault.</li>
+          <li><strong>Text.</strong> Normalize to Unicode NFC, trim leading and trailing whitespace, and drop the record if the result is empty.</li>
+          <li><strong>Source.</strong> Set a short, stable origin label that does not reveal the local machine, for example <code>chatgpt-export</code> or <code>notes.md</code>.</li>
+          <li><strong>Role.</strong> Map the source's speaker to <code>user</code>, <code>assistant</code>, or <code>system</code>. Map anything that is not a chat turn to <code>note</code>. Unknown roles become <code>note</code>.</li>
+          <li><strong>Timestamp.</strong> If the source has a timestamp, parse it and emit UTC with milliseconds. If it has none, use the Unix epoch <code>1970-01-01T00:00:00.000Z</code> so that re-running the import is reproducible.</li>
+          <li><strong>Tags.</strong> Normalize each to NFC, trim, and lowercase. Drop empty tags and deduplicate. Preserve the first occurrence's order.</li>
+          <li><strong>Hash last.</strong> Compute <code>hash</code> after every other member is final.</li>
+          <li><strong>Deduplicate.</strong> Two cells with the same <code>hash</code> are the same content; an importer SHOULD drop exact duplicates and MUST keep cells that differ in any payload member.</li>
+          <li><strong>No rewriting.</strong> Importing into an existing vault produces a new vault with a new Merkle root; it MUST NOT mutate a sealed vault in place.</li>
+        </ol>
+        <p>Import is lossy by design: it records text and metadata, not attachments, images, or tool calls.</p>
+
+        <h2>Conformance levels</h2>
+        <p>An implementation declares which levels it supports. A higher level includes the lower ones. The <a href="conformance.html">conformance page</a> runs all three against the published vectors.</p>
+        <ol class="steps">
+          <li class="step">
+            <h3>L1 — Parse</h3>
+            <p>Read a vault's structure without a passphrase: valid UTF-8 JSON, <code>format</code> is <code>keepsake/v1</code>, the KDF and cipher parameters decode to the right byte lengths, the ciphertext is at least 16 bytes, and <code>merkle</code> matches <code>^[0-9a-f]{64}$</code>.</p>
+          </li>
+          <li class="step">
+            <h3>L2 — Integrity</h3>
+            <p>Given the passphrase, confirm the plaintext is exactly what the vault commits to: decryption succeeds, each cell's recomputed hash matches, ids are unique, and the Merkle root of the cell hashes equals the vault's <code>merkle</code>.</p>
+          </li>
+          <li class="step">
+            <h3>L3 — Crypto round-trip</h3>
+            <p>Reproduce the exact bytes: opening the example vault yields a plaintext byte-for-byte equal to its <code>plaintextCanonicalJson</code>, and re-encrypting with the same derived key and IV reproduces the ciphertext.</p>
+          </li>
+        </ol>
+
+        <h2>Security notes</h2>
+        <p>This section is informative. It describes the security model and its honest limits; it is not a formal audit.</p>
+        <h3>Passphrase handling</h3>
+        <ul>
+          <li>The passphrase is never stored in the vault and is never written to disk by the reference implementation. There is no recovery: a lost passphrase means a lost vault.</li>
+          <li>The passphrase is used only to derive the key in memory. It should not be logged, placed in shell history where avoidable, or passed on a command line when an environment variable or prompt is available.</li>
+          <li>Use a high-entropy passphrase. PBKDF2 with 250,000 iterations raises the cost of guessing but cannot rescue a weak passphrase.</li>
+        </ul>
+        <h3>Keys and algorithms</h3>
+        <ul>
+          <li>Keys are derived per vault from the stored salt. A fresh 16-byte salt and a fresh 12-byte IV MUST be drawn from a cryptographically secure random source for every encryption. Reusing an IV under the same key breaks AES-GCM and is catastrophic.</li>
+          <li>AES-256-GCM authenticates the ciphertext: a modified, truncated, or reordered file fails the tag check. It does not authenticate the base64 container or the <code>createdAt</code> metadata, which are informational.</li>
+          <li>There is no key escrow, no server-side key, and no network fallback.</li>
+        </ul>
+        <h3>What the vault reveals</h3>
+        <p>The container is not encrypted. An observer of the file can see the format version, the creation time, the cell count, the KDF parameters, and the exact ciphertext length, which approximates the plaintext length. The <code>merkle</code> root is also public: equal roots mean equal cell sets, and a low-entropy cell could be guessed and confirmed by recomputing its hash. Version 0.1 does not pad the plaintext.</p>
+        <h3>Honest limits</h3>
+        <ul>
+          <li><strong>No semantic recall.</strong> Version 0.1 has no embeddings and no vector search; recall is lexical.</li>
+          <li><strong>No sync.</strong> There is no server, account, multi-writer merge, or conflict resolution.</li>
+          <li><strong>No key rotation.</strong> Changing the passphrase means opening the vault and sealing a new one; there is no re-wrap-in-place.</li>
+          <li><strong>No forward secrecy.</strong> A single long-lived passphrase protects every generation of the vault.</li>
+          <li><strong>No revocation.</strong> Copies cannot be recalled once they exist.</li>
+        </ul>
+        <div class="callout" role="note">
+          <p>Report suspected vulnerabilities privately through <a href="https://github.com/srivtx/keepsake/security/advisories/new">GitHub Security Advisories</a>. Do not open a public issue.</p>
+        </div>
+
+        <div class="docs__foot">
+          <a href="index.html">← Overview</a>
+          <a href="usage.html">Usage →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT licensed.</p>
+      <p>© 2026 keepsake</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usage — keepsake</title>
+<meta name="description" content="Install keepsake, the CLI commands (import, search, export, verify, stats, mcp), the passphrase environment rule, exit codes, and the MCP server configuration.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Usage — keepsake">
+<meta property="og:description" content="Install keepsake, the CLI commands, the passphrase rule, exit codes, and the MCP configuration.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/usage.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Usage — keepsake">
+<meta name="twitter:description" content="keepsake CLI commands, the passphrase rule, exit codes, and the MCP server.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/usage.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c026d3'/%3E%3Crect x='8.2' y='7.2' width='15.6' height='17.6' rx='3.2' fill='none' stroke='white' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='14' r='2.2' fill='white'/%3E%3Cpath d='M16 15.6V19' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 32 32" focusable="false">
+          <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+          <circle cx="16" cy="14" r="2.6"></circle>
+          <path d="M16 16.3V20.5"></path>
+        </svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">portable AI memory</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html" aria-current="page">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Reference</p>
+          <h1>Usage</h1>
+          <p>The same engine runs as a browser app, a Bun CLI, and an MCP server. The CLI is the reference for scripts and CI; it takes files and writes files, and it never uses the network.</p>
+        </div>
+
+        <h2>Install</h2>
+        <p>keepsake is not published to npm. Install the binary from GitHub with the one-line script, or run it without installing through Bun.</p>
+        <div class="term" aria-label="Install commands">
+          <div class="term__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term__title">install</span>
+          </div>
+          <pre class="term__body term__body--wrap"><span class="ln"><span class="dim"># one-line install (installs the `keepsake` binary)</span></span><span class="ln"><span class="p">$ </span><span class="cmd">curl -fsSL https://raw.githubusercontent.com/srivtx/keepsake/main/install.sh | sh</span></span><span class="ln"></span><span class="ln"><span class="dim"># run once, without installing</span></span><span class="ln"><span class="p">$ </span><span class="cmd">bunx github:srivtx/keepsake#main --help</span></span><span class="ln"></span><span class="ln"><span class="dim"># install globally</span></span><span class="ln"><span class="p">$ </span><span class="cmd">bun add -g github:srivtx/keepsake</span></span><span class="ln"></span><span class="ln"><span class="dim"># add as a project dev dependency</span></span><span class="ln"><span class="p">$ </span><span class="cmd">bun add -d github:srivtx/keepsake</span></span></pre>
+        </div>
+
+        <h2>Commands</h2>
+        <p>Six commands, all local. Every command that touches a vault reads the passphrase from the environment, never from a flag.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>keepsake commands.</caption>
+            <thead>
+              <tr><th scope="col">Command</th><th scope="col">What it does</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>import &lt;file…&gt;</code></td><td>Import one or more sources into a new sealed vault. <code>--out</code> sets the vault path, <code>--source</code> overrides the origin label, <code>--tags a,b</code> adds tags, and <code>--iterations</code> sets the PBKDF2 cost.</td></tr>
+              <tr><td><code>search &lt;query&gt;</code></td><td>Lexical BM25 search over a decrypted vault. Prints ranked cells; exits <code>1</code> when nothing matches.</td></tr>
+              <tr><td><code>export</code></td><td>Decrypt a vault and print its plaintext cells, as text or with <code>--json</code>.</td></tr>
+              <tr><td><code>verify</code></td><td>Open a vault and confirm the GCM tag, every cell hash, and the Merkle root. Exits <code>1</code> if any check fails.</td></tr>
+              <tr><td><code>stats</code></td><td>Report the cell count, byte size, sources, and tags, as text or with <code>--json</code>.</td></tr>
+              <tr><td><code>mcp</code></td><td>Serve a vault over MCP on stdio for any MCP-capable agent.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Examples</h2>
+        <div class="term" aria-label="Example commands">
+          <div class="term__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term__title">examples</span>
+          </div>
+          <pre class="term__body term__body--wrap"><span class="ln"><span class="dim"># import a chat export into a new sealed vault</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake import chatgpt-export.zip --source chatgpt-export --out memory.keepsake</span></span><span class="ln"></span><span class="ln"><span class="dim"># import notes as free-form memories</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake import notes.md --source notes.md --out memory.keepsake</span></span><span class="ln"></span><span class="ln"><span class="dim"># search a vault locally (exact, lexical)</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake search "sourdough" --vault memory.keepsake</span></span><span class="ln"></span><span class="ln"><span class="dim"># export the plaintext cells</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake export --vault memory.keepsake --json</span></span><span class="ln"></span><span class="ln"><span class="dim"># verify hashes and the Merkle root</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake verify --vault memory.keepsake</span></span><span class="ln"></span><span class="ln"><span class="dim"># report stats, then serve the vault over MCP</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake stats --vault memory.keepsake</span></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake mcp --vault memory.keepsake</span></span></pre>
+        </div>
+
+        <h3>A real run</h3>
+        <div class="term" aria-label="A real keepsake run">
+          <div class="term__bar">
+            <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+            <span class="term__title">keepsake</span>
+          </div>
+          <pre class="term__body term__body--wrap"><span class="ln"><span class="p">$ </span><span class="cmd">keepsake import notes.md export.json --out memory.keepsake</span></span><span class="ln"><span class="ok">sealed 5 cell(s)</span><span class="dim"> into memory.keepsake</span></span><span class="ln"><span class="dim">merkle  </span><span class="acc">230b272ae6653e4619e67e37f616eb9d56c0d7482ebf4a3ef9ceac97a174f895</span></span><span class="ln"></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake search "staging database" --vault memory.keepsake</span></span><span class="ln"><span class="dim">1. [json · assistant · 2026-09-20T13:21:37.431Z]  #demo</span></span><span class="ln">Noted: the staging database is cart-staging, reset nightly.</span></pre>
+        </div>
+
+        <h2>The passphrase</h2>
+        <div class="callout" role="note">
+          <p>The passphrase is read from the <code>KEEPSAKE_PASSPHRASE</code> environment variable and is never accepted on the command line. A flag would land in your shell history and the process table. There is no recovery: a lost passphrase means a lost vault.</p>
+        </div>
+        <pre class="code code--wrap"><code>KEEPSAKE_PASSPHRASE='correct horse battery staple' keepsake export --vault memory.keepsake</code></pre>
+
+        <h2>Exit codes</h2>
+        <p>The exit code is the CI gate.</p>
+        <div class="table-wrap">
+          <table>
+            <caption>keepsake exit codes.</caption>
+            <thead>
+              <tr><th scope="col">Code</th><th scope="col">Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>0</code></td><td>Success, or for <code>verify</code>, a vault that checks out.</td></tr>
+              <tr><td><code>1</code></td><td>A finding or negative result: a failed check, or no matches.</td></tr>
+              <tr><td><code>2</code></td><td>Invalid usage, or a vault or cell that does not parse.</td></tr>
+              <tr><td><code>3</code></td><td>I/O error: a file could not be read, written, or found.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>MCP server</h2>
+        <p>Point any MCP-capable agent at a vault over stdio. The server exposes read tools over your cells and makes no network calls: the vault is opened in process.</p>
+        <pre class="code"><code>{
+  "mcpServers": {
+    "keepsake": {
+      "command": "bunx",
+      "args": ["github:srivtx/keepsake#main", "mcp", "--vault", "/home/you/memory.keepsake"],
+      "env": { "KEEPSAKE_PASSPHRASE": "…" }
+    }
+  }
+}</code></pre>
+
+        <h2>Browser app</h2>
+        <p>The <a href="index.html#app">landing page</a> runs the same import, search, seal, and open operations in the tab, with no upload. See the <a href="conformance.html">conformance page</a> to run the published vectors in your browser.</p>
+
+        <div class="docs__foot">
+          <a href="spec.html">← Spec</a>
+          <a href="conformance.html">Conformance →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT licensed.</p>
+      <p>© 2026 keepsake</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Conformance — keepsake</title>
+<meta name="description" content="The three keepsake/v1 conformance levels — parse, integrity, and crypto round-trip — run in your browser against the published test vectors.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Conformance — keepsake">
+<meta property="og:description" content="The three keepsake/v1 conformance levels, run in your browser against the published test vectors.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/conformance.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Conformance — keepsake">
+<meta name="twitter:description" content="Run the keepsake/v1 conformance vectors in your browser.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/conformance.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c026d3'/%3E%3Crect x='8.2' y='7.2' width='15.6' height='17.6' rx='3.2' fill='none' stroke='white' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='14' r='2.2' fill='white'/%3E%3Cpath d='M16 15.6V19' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 32 32" focusable="false">
+          <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+          <circle cx="16" cy="14" r="2.6"></circle>
+          <path d="M16 16.3V20.5"></path>
+        </svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">portable AI memory</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html" aria-current="page">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Reference</p>
+          <h1>Conformance</h1>
+          <p>An implementation declares which of three levels it supports. A higher level includes the lower ones. This page opens the published vectors in your browser and runs all three checks against the same code the app and the CLI use.</p>
+        </div>
+
+        <h2>The three levels</h2>
+        <ol class="steps">
+          <li class="step">
+            <h3>L1 — Parse</h3>
+            <p>Read a vault's structure without a passphrase: valid JSON, the right format identifier, KDF and cipher parameters that decode to the exact byte lengths, and a well-formed Merkle root.</p>
+          </li>
+          <li class="step">
+            <h3>L2 — Integrity</h3>
+            <p>Given the passphrase, confirm the plaintext is exactly what the vault commits to: every cell's recomputed hash matches, ids are unique, and the Merkle root of the cell hashes equals the vault's root.</p>
+          </li>
+          <li class="step">
+            <h3>L3 — Crypto round-trip</h3>
+            <p>Reproduce the exact bytes: opening the example vault yields a plaintext byte-for-byte equal to its canonical JSON, and a wrong passphrase is rejected rather than returning partial plaintext.</p>
+          </li>
+        </ol>
+
+        <h2>Run the vectors</h2>
+        <p>The vectors are the file <a href="vectors.json">vectors.json</a>, fetched from this same origin and checked in the page. Nothing is uploaded.</p>
+
+        <noscript>
+          <div class="callout" role="note">
+            <p>Running the vectors needs JavaScript. The levels above, the <a href="spec.html">format specification</a>, and the <a href="usage.html">usage</a> reference stay fully readable with scripting off.</p>
+          </div>
+        </noscript>
+
+        <div class="btn-row">
+          <button type="button" class="btn btn--primary" id="run-vectors">Run the vectors</button>
+        </div>
+        <p class="status" id="run-status" role="status" aria-live="polite">Not run yet.</p>
+
+        <div class="callout" id="run-error" role="alert" hidden>
+          <p id="run-error-text"></p>
+        </div>
+
+        <div class="summary" id="run-summary" aria-label="Conformance summary"></div>
+
+        <h3>L1 — Parse</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>Structural checks over the example vault, without a passphrase.</caption>
+            <thead>
+              <tr><th scope="col">Check</th><th scope="col">Result</th><th scope="col">Detail</th></tr>
+            </thead>
+            <tbody id="l1-body"></tbody>
+          </table>
+        </div>
+
+        <h3>L2 — Integrity</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>Per-cell canonical hashes and the Merkle root, recomputed from the vector cells.</caption>
+            <thead>
+              <tr><th scope="col">Check</th><th scope="col">Result</th><th scope="col">Detail</th></tr>
+            </thead>
+            <tbody id="l2-body"></tbody>
+          </table>
+        </div>
+
+        <h3>L3 — Crypto round-trip</h3>
+        <div class="table-wrap">
+          <table>
+            <caption>Decryption of the example vault with the vector passphrase.</caption>
+            <thead>
+              <tr><th scope="col">Check</th><th scope="col">Result</th><th scope="col">Detail</th></tr>
+            </thead>
+            <tbody id="l3-body"></tbody>
+          </table>
+        </div>
+
+        <div class="docs__foot">
+          <a href="usage.html">← Usage</a>
+          <a href="faq.html">FAQ →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT licensed.</p>
+      <p>© 2026 keepsake</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script type="module">
+(function () {
+  "use strict";
+
+  var K = window.Keepsake;
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function make(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function clear(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function bytesFromBase64(value) {
+    try {
+      return atob(value).length;
+    } catch (err) {
+      return -1;
+    }
+  }
+
+  function addRow(tbody, label, ok, detail) {
+    var tr = make("tr");
+    tr.appendChild(make("td", null, label));
+    var resultCell = make("td");
+    resultCell.appendChild(make("span", ok ? "chip chip--ok" : "chip chip--error", ok ? "pass" : "fail"));
+    tr.appendChild(resultCell);
+    tr.appendChild(make("td", "mono", detail === undefined ? "" : String(detail)));
+    tbody.appendChild(tr);
+    return ok;
+  }
+
+  function setStatus(text, tone) {
+    var node = $("run-status");
+    node.textContent = text;
+    if (tone) node.setAttribute("data-tone", tone);
+    else node.removeAttribute("data-tone");
+  }
+
+  function showError(message) {
+    $("run-error-text").textContent = message;
+    $("run-error").hidden = false;
+  }
+
+  function clearError() {
+    $("run-error").hidden = true;
+  }
+
+  function pickPayload(cell) {
+    return {
+      id: cell.id,
+      text: cell.text,
+      source: cell.source,
+      role: cell.role,
+      createdAt: cell.createdAt,
+      tags: cell.tags
+    };
+  }
+
+  function runCheck() {
+    clearError();
+    var l1Body = $("l1-body");
+    var l2Body = $("l2-body");
+    var l3Body = $("l3-body");
+    clear(l1Body);
+    clear(l2Body);
+    clear(l3Body);
+    var summary = $("run-summary");
+    clear(summary);
+    var total = 0;
+    var failed = 0;
+
+    if (!K || typeof K.canonicalJson !== "function") {
+      setStatus("The browser bundle assets/app.js did not load.", "error");
+      return Promise.resolve();
+    }
+
+    setStatus("Running…");
+    return fetch("vectors.json").then(function (response) {
+      if (!response.ok) throw new Error("vectors.json returned " + response.status);
+      return response.json();
+    }).then(function (vectors) {
+      var vault = vectors.vaultExample;
+      var passphrase = vectors.passphraseForExample;
+
+      function record(tbody, label, ok, detail) {
+        total += 1;
+        if (!ok) failed += 1;
+        addRow(tbody, label, ok, detail);
+        return ok;
+      }
+
+      // L1 — parse
+      record(l1Body, "format is keepsake/v1", vault.format === "keepsake/v1", vault.format);
+      record(l1Body, "kdf.name is PBKDF2-SHA256", vault.kdf && vault.kdf.name === "PBKDF2-SHA256", vault.kdf && vault.kdf.name);
+      record(l1Body, "kdf.iterations is a positive integer", Number.isInteger(vault.kdf.iterations) && vault.kdf.iterations > 0, vault.kdf.iterations);
+      record(l1Body, "kdf.salt decodes to 16 bytes", bytesFromBase64(vault.kdf.salt) === 16, bytesFromBase64(vault.kdf.salt) + " bytes");
+      record(l1Body, "cipher.name is AES-GCM", vault.cipher && vault.cipher.name === "AES-GCM", vault.cipher && vault.cipher.name);
+      record(l1Body, "cipher.iv decodes to 12 bytes", bytesFromBase64(vault.cipher.iv) === 12, bytesFromBase64(vault.cipher.iv) + " bytes");
+      record(l1Body, "ciphertext is at least 16 bytes", bytesFromBase64(vault.ciphertext) >= 16, bytesFromBase64(vault.ciphertext) + " bytes");
+      record(l1Body, "merkle matches ^[0-9a-f]{64}$", /^[0-9a-f]{64}$/.test(vault.merkle), vault.merkle);
+      record(l1Body, "cells is a non-negative integer", Number.isInteger(vault.cells) && vault.cells >= 0, vault.cells);
+
+      // L2 — integrity over the vector cells
+      var cells = vectors.cells;
+      var payloadChecks = cells.reduce(function (chain, cell) {
+        return chain.then(function () {
+          var payload = pickPayload(cell);
+          var canonical = K.canonicalJson(payload);
+          var canonicalOk = canonical === cell.canonicalJson;
+          record(l2Body, "canonical payload · " + cell.id.slice(0, 8), canonicalOk, canonicalOk ? "matches vector" : "differs from vector");
+          return K.cellHash(cell).then(function (hash) {
+            var hashOk = hash === cell.hash;
+            record(l2Body, "cell hash · " + cell.id.slice(0, 8), hashOk, hashOk ? hash : hash + " ≠ " + cell.hash);
+          });
+        });
+      }, Promise.resolve());
+
+      return payloadChecks.then(function () {
+        var uniqueIds = new Set(cells.map(function (cell) { return cell.id; }));
+        record(l2Body, "cell ids are unique", uniqueIds.size === cells.length, uniqueIds.size + " of " + cells.length);
+        return K.merkleRoot(cells.map(function (cell) { return cell.hash; })).then(function (root) {
+          var rootOk = root === vectors.merkleRoot && root === vault.merkle;
+          record(l2Body, "merkle root matches the vectors", rootOk, root);
+
+          // L3 — crypto round-trip
+          return K.decryptVault(vault, passphrase).then(function (opened) {
+            record(l3Body, "opens with " + JSON.stringify(passphrase), true, opened.length + " cell(s)");
+            var plaintext = K.canonicalJson(opened);
+            var plaintextOk = plaintext === vectors.plaintextCanonicalJson;
+            record(l3Body, "plaintext is byte-for-byte canonical JSON", plaintextOk, plaintextOk ? plaintext.length + " bytes" : "differs");
+            record(l3Body, "decrypted cells match the vector hashes", opened.map(function (cell) { return cell.hash; }).sort().join(",") === cells.map(function (cell) { return cell.hash; }).sort().join(","), opened.length + " cell(s)");
+            return K.decryptVault(vault, passphrase + "-wrong").then(function () {
+              record(l3Body, "wrong passphrase is rejected", false, "decryption unexpectedly succeeded");
+            }, function () {
+              record(l3Body, "wrong passphrase is rejected", true, "threw as expected");
+            });
+          }, function (error) {
+            record(l3Body, "opens with the vector passphrase", false, error && error.message ? error.message : "failed");
+          });
+        });
+      });
+    }).then(function () {
+      var box = $("run-summary");
+      clear(box);
+      box.appendChild(make("span", failed === 0 ? "chip chip--ok" : "chip chip--error", failed === 0 ? "all " + total + " checks passed" : failed + " of " + total + " failed"));
+      if (failed === 0) {
+        setStatus("All " + total + " checks passed across L1, L2, and L3.");
+      } else {
+        setStatus(failed + " of " + total + " checks failed. See the tables above.", "error");
+      }
+    }).catch(function (error) {
+      setStatus("Could not run the vectors: " + (error && error.message ? error.message : error), "error");
+      showError("Could not load or check vectors.json. If you opened this file directly, serve the site over HTTP so the same-origin fetch can run.");
+    });
+  }
+
+  $("run-vectors").addEventListener("click", runCheck);
+  runCheck();
+})();
+</script>
+<script src="assets/site.js" defer></script>
+</body>
+</html>

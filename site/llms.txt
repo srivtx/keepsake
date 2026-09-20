@@ -1,0 +1,18 @@
+# keepsake
+
+> Own your AI memory.
+
+keepsake is an open, encrypted, portable format for personal AI memory plus a reference implementation: a browser app, a Bun CLI, and an MCP server. Import a chat export or your notes, search it locally, seal it into a `.keepsake` vault, and let any MCP-capable agent recall from it. A memory is a hashed Cell; a vault is one JSON file with the cells sealed under AES-256-GCM and a Merkle root committing to the plaintext.
+
+Everything runs offline, with no network calls and no telemetry. Transport is the file itself: there is no server and no account. The CLI emits human-readable text or stable JSON, and its exit codes are `0` (ok), `1` (findings or a negative result), `2` (usage or parse error), and `3` (I/O error).
+
+## Docs
+- [Overview](https://srivtx.github.io/keepsake/): Why memory should be a file you own, and what keepsake is.
+- [Spec](https://srivtx.github.io/keepsake/spec): The normative `keepsake/v1` format: the Cell, canonical JSON, hashing, the Merkle root, the Vault container, KDF and AEAD parameters, import rules, and conformance levels.
+- [Usage](https://srivtx.github.io/keepsake/usage): CLI commands and exit codes, the MCP server, and the browser app.
+- [Conformance](https://srivtx.github.io/keepsake/conformance): The three conformance levels (parse, integrity, crypto round-trip) and the test vectors.
+- [FAQ](https://srivtx.github.io/keepsake/faq): Scope, security model, and the honest limits of version 0.1.
+
+## Optional
+- [Source](https://github.com/srivtx/keepsake): TypeScript implementation, tests, and issue tracker.
+- [Install script](https://raw.githubusercontent.com/srivtx/keepsake/main/install.sh): One-line install of the `keepsake` binary.

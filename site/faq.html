@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ — keepsake</title>
+<meta name="description" content="keepsake scope, honest limits of version 0.1, security posture, how it compares to cloud AI memory and MCP memory servers, and the roadmap.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="FAQ — keepsake">
+<meta property="og:description" content="keepsake scope, honest limits of version 0.1, security posture, and the roadmap.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://srivtx.github.io/keepsake/faq.html">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="FAQ — keepsake">
+<meta name="twitter:description" content="keepsake scope, limits, and how it compares to other memory tools.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake/faq.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c026d3'/%3E%3Crect x='8.2' y='7.2' width='15.6' height='17.6' rx='3.2' fill='none' stroke='white' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='14' r='2.2' fill='white'/%3E%3Cpath d='M16 15.6V19' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 32 32" focusable="false">
+          <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+          <circle cx="16" cy="14" r="2.6"></circle>
+          <path d="M16 16.3V20.5"></path>
+        </svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">portable AI memory</span>
+    </a>
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 7h16M4 12h16M4 17h16"></path></svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <div class="container">
+    <div class="docs">
+      <nav class="docs__nav" aria-label="Docs">
+        <h2>keepsake</h2>
+        <ul>
+          <li><a href="index.html">Overview</a></li>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html" aria-current="page">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <article class="docs__body">
+        <div class="docs__head">
+          <p class="eyebrow">Reference</p>
+          <h1>FAQ</h1>
+          <p>Scope, the honest limits of version 0.1, and where keepsake fits next to the memory tools you already use.</p>
+        </div>
+
+        <h2>Questions</h2>
+        <div class="faq">
+          <details>
+            <summary>What exactly is keepsake?</summary>
+            <div class="faq__body"><p>An open format for personal AI memory (<code>keepsake/v1</code>) plus a reference implementation: a browser app, a Bun CLI, and an MCP server. A memory is a hashed Cell; a vault is one JSON file holding the cells sealed with AES-256-GCM under a PBKDF2-SHA256 key, with a Merkle root committing to the plaintext.</p></div>
+          </details>
+          <details>
+            <summary>Does it need a network or an account?</summary>
+            <div class="faq__body"><p>No. There is no server, no account, no telemetry, and no network code. The CLI reads and writes files on your machine, and the browser app builds the vault in the page. Transport is the file itself.</p></div>
+          </details>
+          <details>
+            <summary>Is the browser app uploading my data?</summary>
+            <div class="faq__body"><p>No. Import, search, seal, and open all run in the tab. Sealing creates the vault in memory and hands it to your browser as a download; the page never posts it anywhere.</p></div>
+          </details>
+          <details>
+            <summary>Is this semantic memory? Does it use embeddings?</summary>
+            <div class="faq__body"><p>No. Version 0.1 has no embeddings, no vector search, and no model inference. Recall is exact and lexical, using BM25 over the plaintext cells. Semantic recall is on the roadmap as an optional layer that would not change the vault format.</p></div>
+          </details>
+          <details>
+            <summary>Does it sync across devices?</summary>
+            <div class="faq__body"><p>No. Version 0.1 defines a file, not a service or a multi-writer merge. You move a vault by copying the file. Sync, with a documented merge and conflict model, is on the roadmap and would stay opt-in.</p></div>
+          </details>
+          <details>
+            <summary>Can I change my passphrase or rotate keys?</summary>
+            <div class="faq__body"><p>Not in place. There is no re-wrap-in-place and no key rotation. Changing the passphrase means opening the vault and sealing a new one. There is no escrow and no recovery path, so a lost passphrase means a lost vault.</p></div>
+          </details>
+          <details>
+            <summary>What does the vault reveal?</summary>
+            <div class="faq__body"><p>The container is not encrypted. An observer can see the format version, the creation time, the cell count, the KDF parameters, the exact ciphertext length, and the Merkle root. Version 0.1 does not pad the plaintext. See the security notes in the <a href="spec.html">spec</a>.</p></div>
+          </details>
+          <details>
+            <summary>How does it compare to cloud AI memory?</summary>
+            <div class="faq__body"><p>Cloud memory lives in the vendor's account: it is not a file you can copy, it is not portable between assistants, and it disappears with the account. keepsake makes the memory a file you own, encrypted at rest and readable by any tool that follows the spec.</p></div>
+          </details>
+          <details>
+            <summary>How does it compare to MCP memory servers?</summary>
+            <div class="faq__body"><p>Many MCP memory servers keep state in a hosted store or a private database. keepsake's MCP server opens a local vault in process, over stdio, and makes no network calls. You keep the file; the agent only gets a view of it while the server runs.</p></div>
+          </details>
+        </div>
+
+        <h2>Honest limits</h2>
+        <div class="callout" role="note">
+          <p>Version 0.1 has no semantic recall, no sync, and no key rotation. It is not a formal audit, and it does not pad the plaintext, so the ciphertext length approximates the plaintext length. Import is lossy by design: it records text and metadata, not attachments, images, or tool calls.</p>
+        </div>
+
+        <h2>Security posture</h2>
+        <dl class="defgrid">
+          <div>
+            <dt>No server</dt>
+            <dd>Importing, searching, sealing, and opening all run locally. There is no network code and no fallback to a remote key.</dd>
+          </div>
+          <div>
+            <dt>No account</dt>
+            <dd>There is nothing to sign in to and nothing to identify you. The vault is a file, not a resource behind an API.</dd>
+          </div>
+          <div>
+            <dt>No telemetry</dt>
+            <dd>Nothing is reported about what you import, search, or seal. The page and the CLI make no outbound requests.</dd>
+          </div>
+          <div>
+            <dt>Encrypted at rest</dt>
+            <dd>AES-256-GCM with the tag included: any change to the ciphertext fails to open, and there is no partial plaintext on a bad tag.</dd>
+          </div>
+          <div>
+            <dt>Integrity you can check</dt>
+            <dd>Per-cell SHA-256 hashes and a Merkle root detect any change to the plaintext. <code>keepsake verify</code> checks both.</dd>
+          </div>
+          <div>
+            <dt>No key escrow</dt>
+            <dd>The passphrase is never stored and there is no recovery. PBKDF2 at 250,000 iterations raises the cost of guessing but cannot rescue a weak passphrase.</dd>
+          </div>
+        </dl>
+
+        <h2>How it compares</h2>
+        <div class="deflist">
+          <div class="defrow">
+            <dt class="defrow__term">Cloud AI memory</dt>
+            <dd class="defrow__def">A hosted profile attached to one vendor. Portable only through a lossy export, with no integrity story and no way to hand it to a different agent. <strong>keepsake is a file you own.</strong></dd>
+          </div>
+          <div class="defrow">
+            <dt class="defrow__term">MCP memory servers</dt>
+            <dd class="defrow__def">Often backed by a hosted store or a private database the agent cannot export from. keepsake's server opens a local vault over stdio and commits to the plaintext with a Merkle root. <a href="usage.html">MCP configuration</a></dd>
+          </div>
+          <div class="defrow">
+            <dt class="defrow__term">A plain JSON export</dt>
+            <dd class="defrow__def">Readable by anyone who finds it, with no encryption, no hashes, and no schema. keepsake keeps the text encrypted and adds per-cell hashes, a Merkle root, and a normative format. <a href="spec.html">The format</a></dd>
+          </div>
+        </div>
+
+        <h2>Roadmap</h2>
+        <div class="table-wrap">
+          <table>
+            <caption>Planned, without changing the <code>keepsake/v1</code> vault format.</caption>
+            <thead>
+              <tr><th scope="col">Feature</th><th scope="col">Direction</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Embeddings</td><td>Optional local semantic recall layered over the same cells.</td></tr>
+              <tr><td>Sync</td><td>Optional, opt-in multi-device sync with a documented merge and conflict model.</td></tr>
+              <tr><td>Key rotation</td><td>Re-wrap a vault under a new passphrase without exposing the plaintext to a server.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>Reporting</h2>
+        <p>Report suspected vulnerabilities privately through <a href="https://github.com/srivtx/keepsake/security/advisories/new">GitHub Security Advisories</a>. Do not open a public issue.</p>
+
+        <div class="docs__foot">
+          <a href="conformance.html">← Conformance</a>
+          <a href="index.html">Overview →</a>
+        </div>
+      </article>
+    </div>
+  </div>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT licensed.</p>
+      <p>© 2026 keepsake</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/site.js" defer></script>
+</body>
+</html>

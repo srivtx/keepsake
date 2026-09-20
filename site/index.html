@@ -1,0 +1,679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>keepsake — own your AI memory</title>
+<meta name="description" content="keepsake is an open, encrypted, portable format for personal AI memory. Import a chat export or notes, search it locally, seal it into a .keepsake vault, and let any agent recall it over MCP. Offline, no server, no account.">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="keepsake — own your AI memory">
+<meta property="og:description" content="Import a chat export or notes, search it locally, seal it into an encrypted .keepsake vault, and let any agent recall it over MCP.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://srivtx.github.io/keepsake">
+<meta property="og:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="keepsake — own your AI memory">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="keepsake — own your AI memory">
+<meta name="twitter:description" content="Import a chat export or notes, search it locally, seal it into an encrypted .keepsake vault, and let any agent recall it over MCP.">
+<meta name="twitter:image" content="https://srivtx.github.io/keepsake/assets/og.png">
+<link rel="canonical" href="https://srivtx.github.io/keepsake">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23c026d3'/%3E%3Crect x='8.2' y='7.2' width='15.6' height='17.6' rx='3.2' fill='none' stroke='white' stroke-width='2.4'/%3E%3Ccircle cx='16' cy='14' r='2.2' fill='white'/%3E%3Cpath d='M16 15.6V19' stroke='white' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="assets/lens.css">
+<link rel="stylesheet" href="assets/theme.css">
+<script>
+(function () {
+  try {
+    var stored = window.localStorage.getItem("keepsake-theme");
+    if (stored === "dark" || stored === "light") {
+      document.documentElement.setAttribute("data-theme", stored);
+    }
+  } catch (err) {}
+  if (
+    "IntersectionObserver" in window &&
+    !(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)
+  ) {
+    document.documentElement.classList.add("js");
+  }
+})();
+</script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="nav" id="top">
+  <div class="container nav__inner">
+    <a class="brand" href="index.html" aria-label="keepsake home">
+      <span class="brand__mark" aria-hidden="true">
+        <svg class="icon" viewBox="0 0 32 32" focusable="false">
+          <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+          <circle cx="16" cy="14" r="2.6"></circle>
+          <path d="M16 16.3V20.5"></path>
+        </svg>
+      </span>
+      <span class="brand__name">keepsake</span>
+      <span class="brand__tag">portable AI memory</span>
+    </a>
+
+    <nav class="nav__links" id="site-nav" aria-label="Sections">
+      <a href="spec.html">Spec</a>
+      <a href="usage.html">Usage</a>
+      <a href="conformance.html">Conformance</a>
+      <a href="faq.html">FAQ</a>
+      <a href="https://github.com/srivtx/keepsake">GitHub</a>
+    </nav>
+
+    <div class="nav__actions">
+      <button type="button" class="nav__toggle btn btn--ghost btn--sm" id="nav-toggle" aria-expanded="false" aria-controls="site-nav" aria-label="Open navigation">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M4 7h16M4 12h16M4 17h16"></path>
+        </svg>
+      </button>
+      <button type="button" class="btn btn--ghost btn--sm" id="theme-toggle" aria-pressed="false" aria-label="Switch to dark theme">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+        </svg>
+        <span id="theme-toggle-text">Theme</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero__glow" aria-hidden="true"></div>
+    <div class="container">
+      <div class="split">
+        <div class="split__copy">
+          <p class="eyebrow reveal">Encrypted · portable · offline</p>
+          <h1 id="hero-title" class="reveal">Own your AI memory.</h1>
+          <p class="hero__lede reveal">Import a chat export or your notes, search it locally, seal it into an encrypted <code>.keepsake</code> vault, and let any agent recall it over MCP. No server, no account, no network call.</p>
+
+          <div class="btn-row reveal">
+            <a class="btn btn--primary" href="#app">
+              Try it in your browser
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h13M13 6l6 6-6 6"></path></svg>
+            </a>
+            <a class="btn btn--outline" href="spec.html">Read the spec</a>
+          </div>
+
+          <div class="install reveal">
+            <code class="install__cmd">bunx github:srivtx/keepsake#main --help</code>
+            <button type="button" class="btn btn--outline btn--sm" data-copy="bunx github:srivtx/keepsake#main --help">Copy</button>
+          </div>
+          <p class="install__note reveal">Run it once with Bun, or install the <code>keepsake</code> binary with the one-line script. It is not on npm.</p>
+        </div>
+
+        <div class="split__aside reveal">
+          <div class="term" aria-label="Example keepsake run">
+            <div class="term__bar">
+              <span class="term__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="term__title">keepsake</span>
+            </div>
+            <pre class="term__body term__body--wrap"><span class="ln"><span class="p">$ </span><span class="cmd">keepsake import notes.md export.json --out memory.keepsake</span></span><span class="ln"><span class="ok">sealed 5 cell(s)</span><span class="dim"> into memory.keepsake</span></span><span class="ln"><span class="dim">merkle  </span><span class="acc">230b272ae6653e4619e67e37f616eb9d56c0d7482ebf4a3ef9ceac97a174f895</span></span><span class="ln"></span><span class="ln"><span class="p">$ </span><span class="cmd">keepsake search "staging database" --vault memory.keepsake</span></span><span class="ln"><span class="dim">1. [json · assistant · 2026-09-20T13:21:37.431Z]  #demo</span></span><span class="ln">Noted: the staging database is cart-staging, reset nightly.</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="app" aria-labelledby="app-title">
+    <div class="container">
+      <div class="band reveal">
+        <p class="band__label" id="app-title">Browser app</p>
+        <div class="band__body">
+          <p class="band__lead">Import, search, seal, and open a vault without leaving the page. Everything runs in this tab; nothing is uploaded.</p>
+
+          <noscript>
+            <div class="callout" role="note">
+              <p>The browser app needs JavaScript. The <a href="spec.html">format specification</a> and the <a href="usage.html">usage</a> reference do not: they are plain HTML and stay fully readable with scripting off.</p>
+            </div>
+          </noscript>
+
+          <div class="playground">
+            <div class="playground__head">
+              <p class="eyebrow">Local only</p>
+              <p class="playground__hint">Runs entirely in your browser. Nothing is uploaded.</p>
+            </div>
+
+            <div class="playground__body">
+              <div class="grid grid--2">
+
+                <div class="card">
+                  <h3>1 · Import</h3>
+                  <p class="muted">A chat export, a notes file, or a few lines. A ChatGPT <code>conversations.json</code> is recognized automatically.</p>
+                  <label class="field" for="import-text">Memory text</label>
+                  <textarea id="import-text" class="input" spellcheck="false">I want to move my chat history out of the cloud.
+
+The staging database is cart-staging, reset nightly.
+
+Ask about my grandmother's sourdough recipe.</textarea>
+                  <label class="field" for="import-file">…or choose a .md, .txt, or .json file</label>
+                  <input id="import-file" class="file-input" type="file" accept=".md,.markdown,.txt,.json,application/json,text/plain">
+                  <div class="btn-row">
+                    <button type="button" class="btn btn--primary" id="import-run">Import</button>
+                    <button type="button" class="btn btn--outline" id="clear-all">Clear all</button>
+                  </div>
+                  <p class="status" id="import-status" role="status" aria-live="polite">No cells imported yet.</p>
+                </div>
+
+                <div class="card">
+                  <h3>2 · Search</h3>
+                  <p class="muted">Exact, lexical BM25 ranking over the imported cells. No embeddings in <code>keepsake/v1</code>.</p>
+                  <label class="field" for="search-query">Query</label>
+                  <input id="search-query" class="input" type="search" style="min-height:0;padding:10px 14px" placeholder="staging database" autocomplete="off">
+                  <div class="btn-row">
+                    <button type="button" class="btn btn--outline" id="search-run">Search</button>
+                  </div>
+                  <p class="status" id="search-status" role="status" aria-live="polite">Import something, then search it.</p>
+                </div>
+
+                <div class="card">
+                  <h3>3 · Seal a vault</h3>
+                  <p class="muted">AES-256-GCM under a PBKDF2-SHA256 key, then a download of <code>YYYY-MM-DD-keepsake.keepsake</code>. The passphrase is never stored.</p>
+                  <label class="field" for="seal-pass">Passphrase</label>
+                  <input id="seal-pass" class="input" type="password" style="min-height:0;padding:10px 14px" autocomplete="new-password">
+                  <div class="btn-row">
+                    <button type="button" class="btn btn--primary" id="seal-run">Seal vault</button>
+                  </div>
+                  <p class="status" id="seal-status" role="status" aria-live="polite">Nothing sealed yet.</p>
+                </div>
+
+                <div class="card">
+                  <h3>4 · Open a vault</h3>
+                  <p class="muted">Pick a <code>.keepsake</code> file and its passphrase. A wrong passphrase fails the authentication tag and reports an error.</p>
+                  <label class="field" for="open-file">.keepsake file</label>
+                  <input id="open-file" class="file-input" type="file" accept=".keepsake,application/json">
+                  <label class="field" for="open-pass">Passphrase</label>
+                  <input id="open-pass" class="input" type="password" style="min-height:0;padding:10px 14px" autocomplete="current-password">
+                  <div class="btn-row">
+                    <button type="button" class="btn btn--primary" id="open-run">Open vault</button>
+                  </div>
+                  <p class="status" id="open-status" role="status" aria-live="polite">No vault opened.</p>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="playground__results">
+              <div class="callout" id="app-error" role="alert" hidden>
+                <p id="app-error-text"></p>
+              </div>
+
+              <div class="summary" id="app-summary" aria-label="Memory summary"></div>
+
+              <h3>Integrity</h3>
+              <p class="mono" id="app-integrity">No cells yet.</p>
+
+              <h3>Search results</h3>
+              <div class="table-wrap" id="hits-wrap" hidden>
+                <table>
+                  <caption>Ranked matches for the current query.</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Score</th>
+                      <th scope="col">Source</th>
+                      <th scope="col">Role</th>
+                      <th scope="col">Created</th>
+                      <th scope="col">Text</th>
+                    </tr>
+                  </thead>
+                  <tbody id="hits-body"></tbody>
+                </table>
+              </div>
+              <p class="status" id="hits-empty">No search run yet.</p>
+
+              <h3>Cells</h3>
+              <div class="table-wrap" id="cells-wrap" hidden>
+                <table>
+                  <caption>Every cell currently in memory.</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Source</th>
+                      <th scope="col">Role</th>
+                      <th scope="col">Created</th>
+                      <th scope="col">Text</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cells-body"></tbody>
+                </table>
+              </div>
+
+              <h3>Stats</h3>
+              <div class="table-wrap" id="stats-wrap" hidden>
+                <table>
+                  <caption>Counts reported by memoryStats.</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Metric</th>
+                      <th scope="col">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody id="stats-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="how" aria-labelledby="how-title">
+    <div class="container">
+      <div class="band reveal">
+        <p class="band__label" id="how-title">How it works</p>
+        <div class="band__body">
+          <p class="band__lead">Four steps, all on your machine. The vault is a file you can copy, back up, and hand to another tool.</p>
+          <dl class="defgrid">
+            <div>
+              <dt>Import</dt>
+              <dd>A chat export, a notes file, or free text becomes cells. One message, note, or line is one cell with a stable id and a content hash.</dd>
+            </div>
+            <div>
+              <dt>Search</dt>
+              <dd>Recall is exact and lexical over the plaintext you hold. Version 0.1 has no embeddings and no model inference.</dd>
+            </div>
+            <div>
+              <dt>Seal</dt>
+              <dd>The cells are canonicalized, encrypted with AES-256-GCM under a PBKDF2-SHA256 key, and written to one <code>.keepsake</code> file.</dd>
+            </div>
+            <div>
+              <dt>Recall</dt>
+              <dd>Any MCP-capable agent opens the vault over stdio and reads the cells in process. No server holds the only copy.</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="format" aria-labelledby="format-title">
+    <div class="container">
+      <div class="band reveal">
+        <p class="band__label" id="format-title">The format in brief</p>
+        <div class="band__body">
+          <p class="band__lead">A memory is a <strong>Cell</strong>; a vault is one JSON file that holds the cells sealed, plus a Merkle root committing to the exact plaintext.</p>
+          <pre class="code code--wrap"><code>{
+  "format": "keepsake/v1",
+  "createdAt": "2026-03-01T12:00:00.000Z",
+  "cells": 3,
+  "kdf": { "name": "PBKDF2-SHA256", "iterations": 250000, "salt": "…base64…" },
+  "cipher": { "name": "AES-GCM", "iv": "…base64…" },
+  "ciphertext": "…base64, includes the 16-byte GCM tag…",
+  "merkle": "4e540078fb922de39e689dcf86a9828e4e274986fd6fe5a03da2333724c96d2d"
+}</code></pre>
+          <dl class="deflist">
+            <div class="defrow">
+              <dt class="defrow__term">Cell</dt>
+              <dd class="defrow__def">An id, text, source, role, timestamp, tags, and a SHA-256 <code>hash</code> over the canonical payload. Text is UTF-8, normalized to NFC, and must be non-empty.</dd>
+            </div>
+            <div class="defrow">
+              <dt class="defrow__term">Canonical JSON</dt>
+              <dd class="defrow__def">Object keys sorted by code point, no insignificant whitespace. The exact bytes that are hashed and encrypted, so two implementations agree.</dd>
+            </div>
+            <div class="defrow">
+              <dt class="defrow__term">Merkle root</dt>
+              <dd class="defrow__def">A SHA-256 hash tree over the sorted cell hashes. It commits to the set of cells and does not depend on their order.</dd>
+            </div>
+            <div class="defrow">
+              <dt class="defrow__term">Vault</dt>
+              <dd class="defrow__def">Seven members: format, createdAt, cells, kdf, cipher, ciphertext, and merkle. Transport is the file itself.</dd>
+            </div>
+          </dl>
+          <p>Read the normative <a href="spec.html">format specification</a> for the byte-level rules.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="docs" aria-labelledby="docs-title">
+    <div class="container">
+      <div class="band reveal">
+        <p class="band__label" id="docs-title">Documentation</p>
+        <div class="band__body">
+          <p class="band__lead">The landing page is the pitch. The details live on four short pages.</p>
+          <dl class="defgrid">
+            <div>
+              <dt><a href="spec.html">Spec</a></dt>
+              <dd>The normative <code>keepsake/v1</code> format: the Cell, canonical JSON, hashing, the Merkle root, the vault container, and the KDF and AEAD parameters.</dd>
+            </div>
+            <div>
+              <dt><a href="usage.html">Usage</a></dt>
+              <dd>Install, the CLI commands, the passphrase rule, exit codes, and the MCP server configuration.</dd>
+            </div>
+            <div>
+              <dt><a href="conformance.html">Conformance</a></dt>
+              <dd>The three conformance levels, run in your browser against the published test vectors.</dd>
+            </div>
+            <div>
+              <dt><a href="faq.html">FAQ</a></dt>
+              <dd>Scope, security posture, honest limits of version 0.1, and the roadmap.</dd>
+            </div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <span class="brand__mark" aria-hidden="true">
+          <svg class="icon" viewBox="0 0 32 32" focusable="false">
+            <rect x="6.5" y="5.5" width="19" height="21" rx="4"></rect>
+            <circle cx="16" cy="14" r="2.6"></circle>
+            <path d="M16 16.3V20.5"></path>
+          </svg>
+        </span>
+        <div>
+          <p>keepsake</p>
+          <p class="muted">Own your AI memory.</p>
+        </div>
+      </div>
+
+      <nav aria-label="Documentation">
+        <h2>Documentation</h2>
+        <ul>
+          <li><a href="spec.html">Spec</a></li>
+          <li><a href="usage.html">Usage</a></li>
+          <li><a href="conformance.html">Conformance</a></li>
+          <li><a href="faq.html">FAQ</a></li>
+        </ul>
+      </nav>
+
+      <nav aria-label="Project">
+        <h2>Project</h2>
+        <ul>
+          <li><a href="https://github.com/srivtx/keepsake">Repository</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/blob/main/LICENSE">MIT license</a></li>
+          <li><a href="https://github.com/srivtx/keepsake/issues">Issues</a></li>
+          <li><a href="https://srivtx.github.io/lenses">Lenses suite</a></li>
+        </ul>
+      </nav>
+    </div>
+
+    <div class="footer__meta">
+      <p>by svx · MIT licensed.</p>
+      <p>© 2026 keepsake</p>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/app.js"></script>
+<script type="module">
+(function () {
+  "use strict";
+
+  var K = window.Keepsake;
+  var state = { cells: [], hits: [] };
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function make(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function clear(node) {
+    while (node.firstChild) node.removeChild(node.firstChild);
+  }
+
+  function setStatus(node, text, tone) {
+    node.textContent = text;
+    if (tone) node.setAttribute("data-tone", tone);
+    else node.removeAttribute("data-tone");
+  }
+
+  function showError(message) {
+    $("app-error-text").textContent = message;
+    $("app-error").hidden = false;
+  }
+
+  function clearError() {
+    $("app-error").hidden = true;
+  }
+
+  if (!K || typeof K.makeCell !== "function") {
+    showError("The browser bundle assets/app.js did not load, so the app is unavailable. The format and usage pages still work without it.");
+    return;
+  }
+
+  function renderSummary() {
+    var stats = K.memoryStats(state.cells);
+    var box = $("app-summary");
+    clear(box);
+    box.appendChild(make("span", "chip", stats.count + " cells"));
+    box.appendChild(make("span", "chip", Object.keys(stats.sources).length + " sources"));
+    box.appendChild(make("span", "chip", Object.keys(stats.tags).length + " tags"));
+    box.appendChild(make("span", "chip", stats.bytes + " bytes"));
+  }
+
+  function renderCells() {
+    var body = $("cells-body");
+    clear(body);
+    $("cells-wrap").hidden = state.cells.length === 0;
+    state.cells.forEach(function (cell) {
+      var tr = make("tr");
+      tr.appendChild(make("td", null, cell.source));
+      tr.appendChild(make("td", null, cell.role));
+      tr.appendChild(make("td", "mono", cell.createdAt));
+      tr.appendChild(make("td", null, cell.text));
+      body.appendChild(tr);
+    });
+  }
+
+  function renderStats() {
+    var stats = K.memoryStats(state.cells);
+    var body = $("stats-body");
+    clear(body);
+    $("stats-wrap").hidden = state.cells.length === 0;
+    var sourceList = Object.keys(stats.sources).map(function (key) {
+      return key + " (" + stats.sources[key] + ")";
+    });
+    var tagList = Object.keys(stats.tags).map(function (key) {
+      return key + " (" + stats.tags[key] + ")";
+    });
+    [
+      ["Cells", String(stats.count)],
+      ["Bytes", String(stats.bytes)],
+      ["Sources", sourceList.length > 0 ? sourceList.join(", ") : "—"],
+      ["Tags", tagList.length > 0 ? tagList.join(", ") : "—"]
+    ].forEach(function (row) {
+      var tr = make("tr");
+      tr.appendChild(make("th", null, row[0]));
+      tr.appendChild(make("td", null, row[1]));
+      body.appendChild(tr);
+    });
+  }
+
+  function renderHits() {
+    var body = $("hits-body");
+    clear(body);
+    var wrap = $("hits-wrap");
+    var empty = $("hits-empty");
+    wrap.hidden = state.hits.length === 0;
+    empty.hidden = state.hits.length > 0;
+    if (state.hits.length > 0) {
+      empty.textContent = "No search run yet.";
+    }
+    state.hits.forEach(function (hit) {
+      var tr = make("tr");
+      tr.appendChild(make("td", "mono", hit.score.toFixed(3)));
+      tr.appendChild(make("td", null, hit.cell.source));
+      tr.appendChild(make("td", null, hit.cell.role));
+      tr.appendChild(make("td", "mono", hit.cell.createdAt));
+      tr.appendChild(make("td", null, hit.cell.text));
+      body.appendChild(tr);
+    });
+  }
+
+  function renderIntegrity() {
+    var node = $("app-integrity");
+    if (state.cells.length === 0) {
+      node.textContent = "No cells yet.";
+      return;
+    }
+    return K.verifyCells(state.cells).then(function (result) {
+      return K.merkleRoot(state.cells.map(function (cell) {
+        return cell.hash;
+      })).then(function (root) {
+        node.textContent = (result.ok ? "verified" : "changed") + " · merkle " + root;
+      });
+    });
+  }
+
+  function renderAll() {
+    renderSummary();
+    renderCells();
+    renderStats();
+    renderHits();
+    return renderIntegrity();
+  }
+
+  function runImport() {
+    clearError();
+    var fileInput = $("import-file");
+    var file = fileInput.files && fileInput.files[0];
+    var text = file ? null : $("import-text").value;
+    var source = file ? K.detectSource(file.name) : "notes";
+
+    var read = file ? file.text() : Promise.resolve(text);
+    setStatus($("import-status"), "Importing…");
+
+    return read.then(function (content) {
+      var inputs = K.normalizeImport(String(content), source);
+      if (inputs.length === 0) {
+        setStatus($("import-status"), "Nothing to import.", "error");
+        return null;
+      }
+      return inputs.reduce(function (chain, input) {
+        return chain.then(function (acc) {
+          return K.makeCell(input).then(function (cell) {
+            acc.push(cell);
+            return acc;
+          });
+        });
+      }, Promise.resolve([]));
+    }).then(function (made) {
+      if (!made) return;
+      state.cells = state.cells.concat(made);
+      state.hits = [];
+      $("hits-empty").textContent = "No search run yet.";
+      return renderAll().then(function () {
+        setStatus($("import-status"), "Imported " + made.length + " cell(s) from " + source + ".");
+      });
+    }).catch(function (error) {
+      setStatus($("import-status"), "Import failed: " + (error && error.message ? error.message : error), "error");
+    });
+  }
+
+  function runSearch() {
+    var query = $("search-query").value;
+    if (query.trim().length === 0) {
+      state.hits = [];
+      renderHits();
+      $("hits-empty").textContent = "Type a query to search the cells.";
+      setStatus($("search-status"), "Exact, lexical recall over your cells.");
+      return;
+    }
+    state.hits = K.bm25(state.cells, query, { limit: 10 });
+    renderHits();
+    var label = state.hits.length === 1 ? "1 match." : state.hits.length + " matches.";
+    $("hits-empty").textContent = state.hits.length === 0 ? "No cells matched “" + query + "”." : "No search run yet.";
+    setStatus($("search-status"), label);
+  }
+
+  function sealVault() {
+    clearError();
+    if (state.cells.length === 0) {
+      setStatus($("seal-status"), "Import at least one cell first.", "error");
+      return;
+    }
+    var passphrase = $("seal-pass").value;
+    if (passphrase.length === 0) {
+      setStatus($("seal-status"), "Enter a passphrase.", "error");
+      return;
+    }
+    setStatus($("seal-status"), "Sealing…");
+    return K.encryptVault(state.cells, passphrase).then(function (vault) {
+      var name = new Date().toISOString().slice(0, 10) + "-keepsake.keepsake";
+      var blob = new Blob([JSON.stringify(vault, null, 2)], { type: "application/json" });
+      var url = URL.createObjectURL(blob);
+      var link = document.createElement("a");
+      link.href = url;
+      link.download = name;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setStatus($("seal-status"), "Sealed " + vault.cells + " cell(s) into " + name + " · merkle " + vault.merkle.slice(0, 16) + "…");
+    }).catch(function (error) {
+      setStatus($("seal-status"), "Seal failed: " + (error && error.message ? error.message : error), "error");
+    });
+  }
+
+  function openVault() {
+    clearError();
+    var fileInput = $("open-file");
+    if (!fileInput.files || fileInput.files.length === 0) {
+      setStatus($("open-status"), "Choose a .keepsake file first.", "error");
+      return;
+    }
+    var passphrase = $("open-pass").value;
+    if (passphrase.length === 0) {
+      setStatus($("open-status"), "Enter the passphrase for this vault.", "error");
+      return;
+    }
+    var file = fileInput.files[0];
+    setStatus($("open-status"), "Opening…");
+    return file.text().then(function (text) {
+      var parsed = JSON.parse(text);
+      return K.decryptVault(parsed, passphrase).then(function (opened) {
+        state.cells = opened;
+        state.hits = [];
+        $("hits-empty").textContent = "No search run yet.";
+        return renderAll().then(function () {
+          var summary = K.vaultSummary(parsed);
+          setStatus($("open-status"), "Opened " + opened.length + " cell(s) · merkle " + summary.merkle.slice(0, 16) + "…");
+        });
+      });
+    }).catch(function () {
+      setStatus($("open-status"), "Could not open the vault: wrong passphrase or a corrupt file.", "error");
+    });
+  }
+
+  $("import-run").addEventListener("click", runImport);
+  $("clear-all").addEventListener("click", function () {
+    state.cells = [];
+    state.hits = [];
+    $("import-file").value = "";
+    clearError();
+    setStatus($("import-status"), "No cells imported yet.");
+    setStatus($("search-status"), "Import something, then search it.");
+    $("hits-empty").textContent = "No search run yet.";
+    renderAll();
+  });
+  $("search-run").addEventListener("click", runSearch);
+  $("search-query").addEventListener("input", runSearch);
+  $("seal-run").addEventListener("click", sealVault);
+  $("open-run").addEventListener("click", openVault);
+
+  renderAll();
+})();
+</script>
+<script src="assets/site.js" defer></script>
+</body>
+</html>

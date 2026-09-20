@@ -1,0 +1,62 @@
+{
+  "version": "keepsake/v1",
+  "passphraseForExample": "conformance-vector",
+  "cells": [
+    {
+      "id": "3f7c9d2e-1a4b-4c8d-9e0f-1a2b3c4d5e6f",
+      "text": "I want to move my chat history out of the cloud.",
+      "source": "chatgpt-export",
+      "role": "user",
+      "createdAt": "2026-01-05T09:12:00.000Z",
+      "tags": [
+        "privacy",
+        "memory"
+      ],
+      "hash": "32003353cb5403744610e2570bd435030b4aaa5d930e272c8723a382f7526516",
+      "canonicalJson": "{\"createdAt\":\"2026-01-05T09:12:00.000Z\",\"id\":\"3f7c9d2e-1a4b-4c8d-9e0f-1a2b3c4d5e6f\",\"role\":\"user\",\"source\":\"chatgpt-export\",\"tags\":[\"privacy\",\"memory\"],\"text\":\"I want to move my chat history out of the cloud.\"}"
+    },
+    {
+      "id": "8b1e5a7c-2d3f-4a6b-8c9d-0e1f2a3b4c5d",
+      "text": "Portable memory means one encrypted file that you control.",
+      "source": "chatgpt-export",
+      "role": "assistant",
+      "createdAt": "2026-01-05T09:12:04.000Z",
+      "tags": [
+        "memory"
+      ],
+      "hash": "e7aef9cdcd7d685e874fff697be0357afa79fc5b47f3c83ca57d288261128ab5",
+      "canonicalJson": "{\"createdAt\":\"2026-01-05T09:12:04.000Z\",\"id\":\"8b1e5a7c-2d3f-4a6b-8c9d-0e1f2a3b4c5d\",\"role\":\"assistant\",\"source\":\"chatgpt-export\",\"tags\":[\"memory\"],\"text\":\"Portable memory means one encrypted file that you control.\"}"
+    },
+    {
+      "id": "c4a0f9b2-6e7d-4f1a-9b3c-2d4e6f8a0b1c",
+      "text": "Ask about my grandmother's sourdough recipe.",
+      "source": "notes.md",
+      "role": "note",
+      "createdAt": "2026-02-11T18:30:00.000Z",
+      "tags": [
+        "family",
+        "recipes"
+      ],
+      "hash": "c2ead5e68cafbe7bb91ee118aa5ac67dffe1e3981a11ddfad2e47fe6a5d140ff",
+      "canonicalJson": "{\"createdAt\":\"2026-02-11T18:30:00.000Z\",\"id\":\"c4a0f9b2-6e7d-4f1a-9b3c-2d4e6f8a0b1c\",\"role\":\"note\",\"source\":\"notes.md\",\"tags\":[\"family\",\"recipes\"],\"text\":\"Ask about my grandmother's sourdough recipe.\"}"
+    }
+  ],
+  "merkleRoot": "4e540078fb922de39e689dcf86a9828e4e274986fd6fe5a03da2333724c96d2d",
+  "plaintextCanonicalJson": "[{\"createdAt\":\"2026-01-05T09:12:00.000Z\",\"hash\":\"32003353cb5403744610e2570bd435030b4aaa5d930e272c8723a382f7526516\",\"id\":\"3f7c9d2e-1a4b-4c8d-9e0f-1a2b3c4d5e6f\",\"role\":\"user\",\"source\":\"chatgpt-export\",\"tags\":[\"privacy\",\"memory\"],\"text\":\"I want to move my chat history out of the cloud.\"},{\"createdAt\":\"2026-01-05T09:12:04.000Z\",\"hash\":\"e7aef9cdcd7d685e874fff697be0357afa79fc5b47f3c83ca57d288261128ab5\",\"id\":\"8b1e5a7c-2d3f-4a6b-8c9d-0e1f2a3b4c5d\",\"role\":\"assistant\",\"source\":\"chatgpt-export\",\"tags\":[\"memory\"],\"text\":\"Portable memory means one encrypted file that you control.\"},{\"createdAt\":\"2026-02-11T18:30:00.000Z\",\"hash\":\"c2ead5e68cafbe7bb91ee118aa5ac67dffe1e3981a11ddfad2e47fe6a5d140ff\",\"id\":\"c4a0f9b2-6e7d-4f1a-9b3c-2d4e6f8a0b1c\",\"role\":\"note\",\"source\":\"notes.md\",\"tags\":[\"family\",\"recipes\"],\"text\":\"Ask about my grandmother's sourdough recipe.\"}]",
+  "vaultExample": {
+    "format": "keepsake/v1",
+    "createdAt": "2026-03-01T12:00:00.000Z",
+    "cells": 3,
+    "kdf": {
+      "name": "PBKDF2-SHA256",
+      "iterations": 100000,
+      "salt": "AAECAwQFBgcICQoLDA0ODw=="
+    },
+    "cipher": {
+      "name": "AES-GCM",
+      "iv": "AAECAwQFBgcICQoL"
+    },
+    "ciphertext": "vRAacb8fyhuvnGNI6nOkBdDzKpiLTMjhOFXTBpPjbuKzCUo9k7eJMXrnfmOuGcIcUhwaEJYyFAghgcNBGjwvc1SiyCACGVWpGDMTgMNHz3gjSMU8Novb7sAfydXF+UGHTX/e+26/npVECoqcsyARdN212qUCNjE29faSDT7ZO/VlFvaxGahB3TOGbPtOMCG04oazyb38s4Rusi3hHNBxTRa5kzew/geJ5fR16SZv51kHtdos5pH3SBIbey7uyF08824y/fEMBAOxlXWlXgoWpqr5QiOZ9UEygbdaOn3qYyuJwp2/t0aPz04+yU2vb6m1loAEdWvI+Eo4SL3MI0x5KOOLAKYDajLMMIhoBh4qjI8WTkEXnQ4E3UeWN0/ctwox16yThd2mqGuBs6yBLfAYkWH3PhCavRfLYUP909xQUdFnr7iZCMqvcqlqK99mkXs7L6wnryr7Y4vT17j00n7wM0QM9aElICFZheeOoxQ6qshNcR06fg6thka0i1zuTpQtnDb+YhM/4NpgdKMZas1uiqce7KOXyFMAREY5l1TM1A2flNjihU2NcCvR1o4VcCL5lBrg1EESuxawuoEB/ikDDE6ZMR221UPn3H1lyNmQSfFPExyeIietSKrOfcRDf/uNbBZAHU7GZJcozFcJi1noFpH0y+2I3RrdqUiMNtMjJsaFf5E6M3I4kWMtsILhJcGcYHvNYs1oBI/ODbZNBhJjLO6HtyfRBlvFx184oSAkoqXm8uaJV9+goGlTEfCGW8PUGKhf/3+If1S1FbNKTJTD/2vD6UO3fujGN4l//dP8HVcOoS5lgRFR/hX7H467jSEagcq7M38oj93cE5TW2yIQPkl9+8QhRtT9bNpDRpl1cfLzFHtp4QityYLrpQJ7RuvplxmlrJmqW5Zp8kji6Z0eTbmdB/A1nMBCXy8aML+mLeqFRfT/iyp9C06aYu1FR6j3nrXVz3FNAgtKCpdylkycpN8lvOojgLhbNxvXqXY53qi7smVqnrSIezHAU2pHTjNl6coUnAZLr0KqamuChRfo0TBnBuPBcqFcYB4BsIBTapzcscocc0ehSdUU0Z3omitzboo9P9N8+Whsb37kQgJ+8cr07eURWJhBXFD3FFu58LhMP+dRp6jnOTVSPRVL3kOKJHgM",
+    "merkle": "4e540078fb922de39e689dcf86a9828e4e274986fd6fe5a03da2333724c96d2d"
+  }
+}

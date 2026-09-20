@@ -1,0 +1,18 @@
+/* keepsake — per-tool accent for the Lens suite.
+   Only the accent changes here; everything else comes from lens.css. */
+:root {
+  --accent: #c026d3;
+  --accent-ink: #ffffff;
+}
+
+[data-theme="dark"] {
+  --accent: #e879f9;
+  --accent-ink: #0a0a0a;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --accent: #e879f9;
+    --accent-ink: #0a0a0a;
+  }
+}
