@@ -6,6 +6,20 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-20
+
+### Added
+
+- `keepsake conformance [--vectors <path>] [--json]`, which runs the published
+  vectors (L1 parse, L2 integrity, L3 crypto round-trip) against this
+  implementation and exits non-zero on any failure, so any implementation of the
+  format can be tested in CI.
+
+### Fixed
+
+- Corrected the README passphrase and `rotate` examples, and added the required
+  `env` to the MCP configuration snippet.
+
 ## [0.2.0] - 2026-09-20
 
 ### Added
@@ -42,6 +56,7 @@ All notable changes to this project are documented here. The format is based on
 - Import parsers that turn chat exports and notes into cells.
 - `install.sh`, a one-line installer for the `keepsake` binary.
 
-[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/srivtx/keepsake/releases/tag/v0.3.0
 [0.2.0]: https://github.com/srivtx/keepsake/releases/tag/v0.2.0
 [0.1.0]: https://github.com/srivtx/keepsake/releases/tag/v0.1.0

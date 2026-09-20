@@ -28,17 +28,9 @@ export {
   parseConversation,
 } from "./import/chatgpt.ts";
 export { memoryStats } from "./stats.ts";
-export {
-  mergeCells,
-  forgetCells,
-  rotateVault,
-  diffVaults,
-} from "./vault-ops.ts";
-export type {
-  RotateOptions,
-  ForgetSelector,
-  ForgetResult,
-  VaultDiff,
-} from "./vault-ops.ts";
+export { runConformance, formatConformance } from "./conformance.ts";
+export type { ConformanceCheck, ConformanceReport, Vectors } from "./conformance.ts";
+export { mergeCells, forgetCells, rotateVault, diffVaults } from "./vault-ops.ts";
+export type { ForgetResult, ForgetSelector, RotateOptions, VaultDiff } from "./vault-ops.ts";
 export { contextPack } from "./context.ts";
 export type { ContextPack, ContextPackOptions } from "./context.ts";

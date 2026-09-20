@@ -94,8 +94,8 @@ keepsake merge memory.keepsake archive.keepsake --out merged.keepsake
 # Remove cells by id, tag, source, or query, then rewrite the vault
 keepsake forget --vault memory.keepsake --query "staging database" --out pruned.keepsake
 
-# Re-encrypt a vault under a new passphrase
-keepsake rotate --vault memory.keepsake --out memory.keepsake
+# Re-encrypt a vault under a new passphrase (new one in KEEPSAKE_NEW_PASSPHRASE)
+keepsake rotate --vault memory.keepsake
 
 # Compare two vaults
 keepsake diff memory.keepsake archive.keepsake
@@ -103,14 +103,18 @@ keepsake diff memory.keepsake archive.keepsake
 # Print a token-budgeted Markdown context pack for a task
 keepsake context "plan the migration" --vault memory.keepsake --budget 1500
 
+# Run the published conformance vectors against this implementation
+keepsake conformance
+
 # Serve the vault over MCP on stdio
 keepsake mcp --vault memory.keepsake
 ```
 
 Import accepts ChatGPT exports, Claude `conversations.json`, JSONL transcripts,
 JSON message arrays, and plain text or notes. The passphrase is never written to
-disk. The CLI prompts for it, or reads `KEEPSAKE_PASSPHRASE` when it is set for
-non-interactive use. There is no recovery if it is lost.
+disk or passed on the command line: the CLI reads it from `KEEPSAKE_PASSPHRASE`,
+and commands that touch a second vault read `KEEPSAKE_PASSPHRASE_B`. There is no
+recovery if it is lost.
 
 Exit codes:
 
@@ -130,7 +134,8 @@ Any MCP-capable agent can recall from a vault over stdio:
   "mcpServers": {
     "keepsake": {
       "command": "bunx",
-      "args": ["github:srivtx/keepsake#main", "mcp", "--vault", "/path/to/memory.keepsake"]
+      "args": ["github:srivtx/keepsake#main", "mcp", "--vault", "/path/to/memory.keepsake"],
+      "env": { "KEEPSAKE_PASSPHRASE": "…" }
     }
   }
 }

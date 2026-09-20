@@ -10,13 +10,16 @@ import {
   diffVaults,
   encryptVault,
   forgetCells,
+  formatConformance,
   makeCell,
   memoryStats,
   mergeCells,
   normalizeImport,
   rotateVault,
+  runConformance,
   vaultSummary,
 } from "./index.ts";
+import type { Vectors } from "./index.ts";
 import { serve } from "./mcp.ts";
 import type { Cell, VaultFile } from "./types.ts";
 
@@ -31,6 +34,7 @@ export type Command =
   | "rotate"
   | "diff"
   | "context"
+  | "conformance"
   | "mcp";
 
 export interface Options {
@@ -44,6 +48,7 @@ export interface Options {
   ids: string[];
   tag: string | null;
   budget: number | null;
+  vectors: string | null;
   iterations: number | null;
   json: boolean;
   quiet: boolean;
@@ -62,6 +67,7 @@ const COMMANDS: Command[] = [
   "rotate",
   "diff",
   "context",
+  "conformance",
   "mcp",
 ];
 
@@ -97,6 +103,7 @@ Usage:
   keepsake merge <a> <b>    --out <vault>
   keepsake diff <a> <b>
   keepsake rotate           --vault <vault>
+  keepsake conformance      [--vectors <vectors.json>] [--json]
   keepsake mcp              --vault <vault>
 
 Options:
@@ -107,6 +114,7 @@ Options:
   --id <uuid>           Forget one cell id (repeatable)
   --tag <t>             Forget every cell carrying this tag
   --budget <tokens>     Token budget for context (default: 1500)
+  --vectors <path>      Conformance vectors to run (default: the bundled spec/vectors.json)
   --iterations <n>      PBKDF2 iterations for import/rotate (default: 250000)
   --json                Print machine-readable JSON
   --quiet, -q           Print a single summary line
@@ -155,6 +163,7 @@ export function parseArgs(argv: string[]): Options {
     ids: [],
     tag: null,
     budget: null,
+    vectors: null,
     iterations: null,
     json: false,
     quiet: false,
@@ -207,6 +216,8 @@ export function parseArgs(argv: string[]): Options {
       opts.tag = value(arg, "--tag", argv[++i]);
     } else if (arg === "--budget" || arg.startsWith("--budget=")) {
       opts.budget = readNumber(value(arg, "--budget", argv[++i]), "--budget");
+    } else if (arg === "--vectors" || arg.startsWith("--vectors=")) {
+      opts.vectors = value(arg, "--vectors", argv[++i]);
     } else if (arg.startsWith("-")) {
       throw new Error(`unknown option ${arg}`);
     } else if (opts.command === null && (COMMANDS as string[]).includes(arg)) {
@@ -493,6 +504,32 @@ export async function run(argv: string[]): Promise<number> {
           console.log(`rotated ${rotated.cells} cell(s) in ${vaultPath}`);
         }
         return 0;
+      }
+
+      case "conformance": {
+        const path =
+          opts.vectors ?? fileURLToPath(new URL("../spec/vectors.json", import.meta.url));
+        let text: string;
+        try {
+          text = await Bun.file(path).text();
+        } catch (err) {
+          throw new Error(`cannot read ${path}: ${err instanceof Error ? err.message : String(err)}`);
+        }
+        let vectors: Vectors;
+        try {
+          vectors = JSON.parse(text) as Vectors;
+        } catch {
+          throw new Error(`${path} is not valid JSON`);
+        }
+        const report = await runConformance(vectors);
+        if (opts.json) {
+          console.log(JSON.stringify(report, null, 2));
+        } else if (opts.quiet) {
+          console.log(`${report.total - report.failed}/${report.total} checks passed`);
+        } else {
+          console.log(formatConformance(report));
+        }
+        return report.ok ? 0 : 1;
       }
 
       case "mcp": {
