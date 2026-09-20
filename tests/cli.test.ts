@@ -117,4 +117,78 @@ describe("keepsake cli", () => {
   test("a missing vault file is an I/O error", () => {
     expect(run(["verify", "--vault", join(workdir, "missing.keepsake")]).code).toBe(3);
   });
+
+  test("context prints a token-budgeted pack", () => {
+    const { code, out } = run(["context", "staging database", "--vault", vault, "--budget", "500"]);
+    expect(code).toBe(0);
+    expect(out).toContain("# Memory context for: staging database");
+    expect(out).toContain("cart-staging");
+  });
+
+  test("context --json is parseable", () => {
+    const { code, out } = run(["context", "deploys", "--vault", vault, "--json"]);
+    expect(code).toBe(0);
+    const pack = JSON.parse(out) as { task: string; tokens: number; cells: unknown[] };
+    expect(pack.task).toBe("deploys");
+    expect(pack.cells.length).toBeGreaterThan(0);
+  });
+
+  test("rotate re-encrypts under the new passphrase", () => {
+    const rotated = join(workdir, "rotated.keepsake");
+    const copy = Bun.file(vault);
+    expect(copy.size).toBeGreaterThan(0);
+    const seeded = Bun.spawnSync({
+      cmd: ["bun", "run", cli, "import", notes, "--out", rotated, "--iterations", ITER],
+      stdout: "pipe",
+      stderr: "pipe",
+      env: { ...process.env, KEEPSAKE_PASSPHRASE: PASS } as Record<string, string>,
+    });
+    expect(seeded.exitCode).toBe(0);
+    const rotate = Bun.spawnSync({
+      cmd: ["bun", "run", cli, "rotate", "--vault", rotated],
+      stdout: "pipe",
+      stderr: "pipe",
+      env: { ...process.env, KEEPSAKE_PASSPHRASE: PASS, KEEPSAKE_NEW_PASSPHRASE: "new-secret" } as Record<
+        string,
+        string
+      >,
+    });
+    expect(rotate.exitCode).toBe(0);
+    expect(run(["verify", "--vault", rotated], "new-secret").code).toBe(0);
+    expect(run(["verify", "--vault", rotated], PASS).code).toBe(1);
+  });
+
+  test("forget removes by query and rewrites the vault", () => {
+    const target = join(workdir, "forget.keepsake");
+    Bun.spawnSync({
+      cmd: ["bun", "run", cli, "import", notes, "--out", target, "--iterations", ITER],
+      stdout: "pipe",
+      stderr: "pipe",
+      env: { ...process.env, KEEPSAKE_PASSPHRASE: PASS } as Record<string, string>,
+    });
+    const result = run(["forget", "--vault", target, "--query", "staging"]);
+    expect(result.code).toBe(0);
+    expect(run(["search", "staging", "--vault", target]).code).toBe(1);
+    expect(run(["search", "deploys", "--vault", target]).code).toBe(0);
+  });
+
+  test("merge unions two vaults", () => {
+    const a = join(workdir, "merge-a.keepsake");
+    const b = join(workdir, "merge-b.keepsake");
+    const out = join(workdir, "merge-out.keepsake");
+    const notesB = join(workdir, "notes-b.md");
+    writeFileSync(notesB, "The design review happens every second Wednesday.\n");
+    for (const [file, target] of [[notes, a], [notesB, b]] as const) {
+      Bun.spawnSync({
+        cmd: ["bun", "run", cli, "import", file, "--out", target, "--iterations", ITER],
+        stdout: "pipe",
+        stderr: "pipe",
+        env: { ...process.env, KEEPSAKE_PASSPHRASE: PASS } as Record<string, string>,
+      });
+    }
+    const merged = run(["merge", a, b, "--out", out]);
+    expect(merged.code).toBe(0);
+    const stats = run(["stats", "--vault", out, "--json"]);
+    expect((JSON.parse(stats.out) as { count: number }).count).toBe(3);
+  });
 });

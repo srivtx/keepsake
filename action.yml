@@ -1,0 +1,30 @@
+name: Verify keepsake vault
+description: Verify an encrypted .keepsake vault in CI, failing the job if the passphrase is wrong or any cell hash or the Merkle root does not match.
+
+inputs:
+  vault:
+    description: Path to the .keepsake vault file to verify.
+    required: true
+  passphrase:
+    description: Vault passphrase. Pass a repository secret, never a literal.
+    required: true
+  version:
+    description: keepsake ref to run.
+    required: false
+    default: main
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.3.x
+
+    - name: Verify vault
+      shell: bash
+      env:
+        INPUTS_VAULT: ${{ inputs.vault }}
+        INPUTS_VERSION: ${{ inputs.version }}
+        KEEPSAKE_PASSPHRASE: ${{ inputs.passphrase }}
+      run: bunx github:srivtx/keepsake#${INPUTS_VERSION} verify --vault "$INPUTS_VAULT"

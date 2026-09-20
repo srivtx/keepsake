@@ -276,6 +276,31 @@ the cell order the sealer chose; the Merkle root does not depend on that order.
 plaintext = UTF-8( canonicalJson( [ cell0, cell1, … ] ) )
 ```
 
+### Operations
+
+Merge, forget, rotate, and diff are defined over this same `keepsake/v1`
+container; none of them introduces a new format or changes the member set. Each
+operation opens the input vault (or vaults), acts on the cell set, and seals the
+result as a new vault with a fresh salt and IV. A vault MAY therefore be
+rewritten at any time by re-encrypting the same cells.
+
+- **merge** produces the union of two vaults' cells.
+- **forget** produces the input vault minus the cells that match a selector (id,
+  tag, source, or query).
+- **rotate** re-encrypts the same cells under a new passphrase.
+- **diff** reports the cells that differ between two vaults.
+
+A rewrite draws a fresh salt and IV, so the `ciphertext`, the `kdf.salt`, the
+`cipher.iv`, and (for a changed cell set) the `merkle` root differ from the
+original; the ids and hashes of carried-over cells are preserved. Rewriting is
+the only way to change a vault: a sealed vault is never mutated in place.
+
+A **context pack** is not part of the on-disk format. It is a transient,
+token-budgeted projection of a vault's cells, assembled on demand for a task. It
+is not stored in the container and does not appear in the plaintext array; any
+implementation may choose its own budget and framing without affecting
+conformance.
+
 ## Key derivation and encryption
 
 Sealing and opening use only standard primitives.

@@ -112,7 +112,7 @@
           </details>
           <details>
             <summary>Can I change my passphrase or rotate keys?</summary>
-            <div class="faq__body"><p>Not in place. There is no re-wrap-in-place and no key rotation. Changing the passphrase means opening the vault and sealing a new one. There is no escrow and no recovery path, so a lost passphrase means a lost vault.</p></div>
+            <div class="faq__body"><p><code>keepsake rotate</code> rewrites a vault under a new passphrase: it decrypts the cells and seals them again with a fresh salt and IV. There is still no in-place re-wrap, so the result is a new file with a new ciphertext. There is no escrow and no recovery path, so a lost passphrase means a lost vault.</p></div>
           </details>
           <details>
             <summary>What does the vault reveal?</summary>
@@ -126,11 +126,19 @@
             <summary>How does it compare to MCP memory servers?</summary>
             <div class="faq__body"><p>Many MCP memory servers keep state in a hosted store or a private database. keepsake's MCP server opens a local vault in process, over stdio, and makes no network calls. You keep the file; the agent only gets a view of it while the server runs.</p></div>
           </details>
+          <details>
+            <summary>Can I verify a vault in CI?</summary>
+            <div class="faq__body"><p>Yes. The repository ships a composite GitHub Action that installs Bun and runs <code>keepsake verify</code> against a committed vault, failing the job if the passphrase is wrong or any cell hash or the Merkle root does not match. Pass the passphrase through a repository secret (<code>KEEPSAKE_PASSPHRASE</code>), never as a literal. The CLI exit code is the gate: <code>0</code> means the vault checks out. See the <a href="usage.html">usage page</a> for the workflow.</p></div>
+          </details>
+          <details>
+            <summary>What is a context pack?</summary>
+            <div class="faq__body"><p>A token-budgeted Markdown digest of the cells most relevant to a task, printed by <code>keepsake context</code> and exposed to agents as the <code>memory_context</code> MCP tool. It is a transient projection: it is built on demand from the decrypted cells and is never written into the vault or committed to the format. It is lexical recall, not semantic, and discarding it leaves the vault unchanged.</p></div>
+          </details>
         </div>
 
         <h2>Honest limits</h2>
         <div class="callout" role="note">
-          <p>Version 0.1 has no semantic recall, no sync, and no key rotation. It is not a formal audit, and it does not pad the plaintext, so the ciphertext length approximates the plaintext length. Import is lossy by design: it records text and metadata, not attachments, images, or tool calls.</p>
+          <p>Version 0.1 has no semantic recall and no sync; the context pack is a lexical projection, not embeddings. <code>keepsake rotate</code> re-encrypts a vault under a new passphrase, but there is no in-place re-wrap. It is not a formal audit, and it does not pad the plaintext, so the ciphertext length approximates the plaintext length. Import is lossy by design: it records text and metadata, not attachments, images, or tool calls.</p>
         </div>
 
         <h2>Security posture</h2>
@@ -187,7 +195,7 @@
             <tbody>
               <tr><td>Embeddings</td><td>Optional local semantic recall layered over the same cells.</td></tr>
               <tr><td>Sync</td><td>Optional, opt-in multi-device sync with a documented merge and conflict model.</td></tr>
-              <tr><td>Key rotation</td><td>Re-wrap a vault under a new passphrase without exposing the plaintext to a server.</td></tr>
+              <tr><td>In-place key rotation</td><td>Re-wrap a vault under a new passphrase without re-encrypting every cell; today <code>keepsake rotate</code> rewrites the file.</td></tr>
             </tbody>
           </table>
         </div>

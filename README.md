@@ -88,13 +88,29 @@ keepsake seal cells.json --out memory.keepsake
 # Verify the integrity of a vault (hashes and Merkle root)
 keepsake verify memory.keepsake
 
+# Merge two vaults into one
+keepsake merge memory.keepsake archive.keepsake --out merged.keepsake
+
+# Remove cells by id, tag, source, or query, then rewrite the vault
+keepsake forget --vault memory.keepsake --query "staging database" --out pruned.keepsake
+
+# Re-encrypt a vault under a new passphrase
+keepsake rotate --vault memory.keepsake --out memory.keepsake
+
+# Compare two vaults
+keepsake diff memory.keepsake archive.keepsake
+
+# Print a token-budgeted Markdown context pack for a task
+keepsake context "plan the migration" --vault memory.keepsake --budget 1500
+
 # Serve the vault over MCP on stdio
 keepsake mcp --vault memory.keepsake
 ```
 
-The passphrase is never written to disk. The CLI prompts for it, or reads
-`KEEPSAKE_PASSPHRASE` when it is set for non-interactive use. There is no
-recovery if it is lost.
+Import accepts ChatGPT exports, Claude `conversations.json`, JSONL transcripts,
+JSON message arrays, and plain text or notes. The passphrase is never written to
+disk. The CLI prompts for it, or reads `KEEPSAKE_PASSPHRASE` when it is set for
+non-interactive use. There is no recovery if it is lost.
 
 Exit codes:
 
@@ -120,8 +136,46 @@ Any MCP-capable agent can recall from a vault over stdio:
 }
 ```
 
-The server exposes read tools over your cells and asks for the passphrase on
-startup. It makes no network calls: the vault is opened in-process.
+The server exposes `memory_recall`, `memory_context`, `memory_stats`, and
+`memory_verify` over your cells, plus `memory_remember` and `memory_forget` to
+write. `memory_context` returns the same token-budgeted pack as the CLI, and
+`memory_forget` removes a memory by id or query. The server asks for the
+passphrase on startup. It makes no network calls: the vault is opened
+in-process.
+
+## Verify a vault in CI
+
+Commit a `.keepsake` vault and let CI prove it still opens and checks out. The
+repository ships a composite action that installs Bun and runs `keepsake verify`
+against the vault, failing the job if the passphrase is wrong or any cell hash or
+the Merkle root does not match.
+
+```yaml
+name: Verify memory
+on: [push, pull_request]
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: srivtx/keepsake@v0.2.0
+        with:
+          vault: memory.keepsake
+          passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
+```
+
+Pass the passphrase as a repository secret, never a literal string. The action
+defaults to `version: main`; pin it to a tag to match the release you run:
+
+```yaml
+      - uses: srivtx/keepsake@v0.2.0
+        with:
+          vault: memory.keepsake
+          passphrase: ${{ secrets.KEEPSAKE_PASSPHRASE }}
+          version: v0.2.0
+```
 
 ## The format in brief
 
@@ -172,9 +226,10 @@ The full specification, the JSON Schema, and conformance vectors are in
 - **Integrity you can check.** Per-cell hashes and a Merkle root detect any
   change to the plaintext.
 - **No key escrow.** The passphrase is never stored and there is no recovery.
-- **Honest limits.** `keepsake/v1` has no semantic embeddings, no sync, and no
-  key rotation. The container leaks its format, creation time, cell count, KDF
-  parameters, and approximate size. See the security notes in the spec.
+- **Honest limits.** `keepsake/v1` has no semantic embeddings and no sync.
+  `keepsake rotate` re-encrypts a vault under a new passphrase, but there is no
+  in-place re-wrap. The container leaks its format, creation time, cell count,
+  KDF parameters, and approximate size. See the security notes in the spec.
 
 Report vulnerabilities privately via
 [GitHub Security Advisories](https://github.com/srivtx/keepsake/security/advisories/new).
@@ -185,8 +240,8 @@ Report vulnerabilities privately via
   without changing the vault format.
 - **Sync** — optional, opt-in multi-device sync with a documented merge and
   conflict model.
-- **Key rotation** — re-wrap a vault under a new passphrase without exposing the
-  plaintext to a server.
+- **Key rotation in place** — re-wrap a vault under a new passphrase without
+  re-encrypting every cell; today `keepsake rotate` rewrites the file.
 
 ## For agents
 

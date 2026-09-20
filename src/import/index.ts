@@ -1,4 +1,6 @@
 import { extractMessage, isConversation, parseConversation } from "./chatgpt.ts";
+import { parseClaudeExport } from "./claude.ts";
+import { parseJsonl } from "./jsonl.ts";
 import type { CellInput, Role } from "../types.ts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -82,8 +84,12 @@ export function normalizeImport(text: string, source: string): CellInput[] {
 
   try {
     const parsed: unknown = JSON.parse(trimmed);
+    const claude = parseClaudeExport(parsed, source);
+    if (claude !== null) return claude;
     return fromValue(parsed, source);
   } catch {
+    const jsonl = parseJsonl(trimmed, source);
+    if (jsonl !== null) return jsonl;
     return fromParagraphs(trimmed, source);
   }
 }

@@ -1,13 +1,23 @@
 import { writeFileSync } from "node:fs";
-import { bm25, decryptVault, encryptVault, makeCell, memoryStats, vaultSummary } from "./index.ts";
+import {
+  bm25,
+  contextPack,
+  decryptVault,
+  encryptVault,
+  forgetCells,
+  makeCell,
+  memoryStats,
+  vaultSummary,
+} from "./index.ts";
 import type { VaultFile } from "./types.ts";
 
 export interface McpOptions {
   vaultPath: string;
   passphrase: string;
+  version: string;
 }
 
-const SERVER_INFO = { name: "keepsake", version: "0.1.0" };
+const SERVER_NAME = "keepsake";
 
 const TOOLS = [
   {
@@ -39,6 +49,37 @@ const TOOLS = [
         tags: { type: "array", items: { type: "string" }, description: "Optional tags." },
       },
       required: ["text"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "memory_context",
+    description:
+      "Build a token-budgeted Markdown context pack for a task from the vault. The pack is transient and is not written to disk.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        task: { type: "string", description: "The task the context is for." },
+        budgetTokens: {
+          type: "integer",
+          description: "Maximum tokens to spend (default 1500).",
+          minimum: 100,
+          maximum: 20000,
+        },
+      },
+      required: ["task"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "memory_forget",
+    description: "Remove memories from the vault by exact id or by a search query, then persist the vault.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string", description: "The exact cell id to forget." },
+        query: { type: "string", description: "Forget every memory matching this search query." },
+      },
       additionalProperties: false,
     },
   },
@@ -93,6 +134,35 @@ async function callTool(name: string, args: Record<string, unknown>, options: Mc
       writeFileSync(options.vaultPath, `${JSON.stringify(vault, null, 2)}\n`);
       return `Stored memory ${cell.id} (vault now holds ${next.length} cells).`;
     }
+    case "memory_context": {
+      const task = asString(args["task"]);
+      if (task.trim().length === 0) return "memory_context requires a non-empty task.";
+      const rawBudget = args["budgetTokens"];
+      const budgetTokens =
+        typeof rawBudget === "number" && Number.isFinite(rawBudget)
+          ? Math.min(Math.max(100, Math.floor(rawBudget)), 20000)
+          : 1500;
+      const cells = await decryptVault(await loadVault(options.vaultPath), options.passphrase);
+      const pack = contextPack(cells, task, { budgetTokens });
+      return pack.cells.length === 0 ? `No memories matched ${JSON.stringify(task)}.` : pack.text;
+    }
+    case "memory_forget": {
+      const id = asString(args["id"]);
+      const query = asString(args["query"]);
+      if (id.length === 0 && query.trim().length === 0) {
+        return "memory_forget requires an id or a query.";
+      }
+      const file = await loadVault(options.vaultPath);
+      const cells = await decryptVault(file, options.passphrase);
+      const { kept, removed } = forgetCells(cells, {
+        ...(id.length > 0 ? { ids: [id] } : {}),
+        ...(query.trim().length > 0 ? { query } : {}),
+      });
+      if (removed.length === 0) return "No memories matched.";
+      const vault = await encryptVault(kept, options.passphrase, { iterations: file.kdf.iterations });
+      writeFileSync(options.vaultPath, `${JSON.stringify(vault, null, 2)}\n`);
+      return `Forgot ${removed.length} memory(ies); ${kept.length} remain.`;
+    }
     case "memory_stats": {
       const cells = await decryptVault(await loadVault(options.vaultPath), options.passphrase);
       const stats = memoryStats(cells);
@@ -132,7 +202,7 @@ async function handle(
       result: {
         protocolVersion: asString(message["params"] && (message["params"] as Record<string, unknown>)["protocolVersion"], "2024-11-05"),
         capabilities: { tools: {} },
-        serverInfo: SERVER_INFO,
+        serverInfo: { name: SERVER_NAME, version: options.version },
       },
     });
     return;

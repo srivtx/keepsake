@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Usage — keepsake</title>
-<meta name="description" content="Install keepsake, the CLI commands (import, search, export, verify, stats, mcp), the passphrase environment rule, exit codes, and the MCP server configuration.">
+<meta name="description" content="Install keepsake, the CLI commands (import, search, export, verify, stats, mcp, merge, forget, rotate, diff, context), the passphrase environment rule, exit codes, and the MCP server configuration.">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
 <meta name="color-scheme" content="light dark">
@@ -99,7 +99,7 @@
         </div>
 
         <h2>Commands</h2>
-        <p>Six commands, all local. Every command that touches a vault reads the passphrase from the environment, never from a flag.</p>
+        <p>Eleven commands, all local. Every command that touches a vault reads the passphrase from the environment, never from a flag.</p>
         <div class="table-wrap">
           <table>
             <caption>keepsake commands.</caption>
@@ -113,9 +113,15 @@
               <tr><td><code>verify</code></td><td>Open a vault and confirm the GCM tag, every cell hash, and the Merkle root. Exits <code>1</code> if any check fails.</td></tr>
               <tr><td><code>stats</code></td><td>Report the cell count, byte size, sources, and tags, as text or with <code>--json</code>.</td></tr>
               <tr><td><code>mcp</code></td><td>Serve a vault over MCP on stdio for any MCP-capable agent.</td></tr>
+              <tr><td><code>merge &lt;vault…&gt;</code></td><td>Union two vaults into one sealed vault, keeping every distinct cell.</td></tr>
+              <tr><td><code>forget</code></td><td>Remove cells by id, tag, source, or query and rewrite the vault; the cells that remain are re-encrypted.</td></tr>
+              <tr><td><code>rotate</code></td><td>Re-encrypt a vault under a new passphrase, preserving the cells.</td></tr>
+              <tr><td><code>diff &lt;vault…&gt;</code></td><td>Compare two vaults and report the cells that were added, removed, or changed.</td></tr>
+              <tr><td><code>context &lt;task&gt;</code></td><td>Print a token-budgeted Markdown context pack for a task. It is generated on demand and never stored in the vault.</td></tr>
             </tbody>
           </table>
         </div>
+        <p>Import reads ChatGPT exports, Claude <code>conversations.json</code>, JSONL transcripts, JSON message arrays, and plain text or notes.</p>
 
         <h2>Examples</h2>
         <div class="term" aria-label="Example commands">
@@ -159,7 +165,7 @@
         </div>
 
         <h2>MCP server</h2>
-        <p>Point any MCP-capable agent at a vault over stdio. The server exposes read tools over your cells and makes no network calls: the vault is opened in process.</p>
+        <p>Point any MCP-capable agent at a vault over stdio. The server exposes six tools: <code>memory_recall</code>, <code>memory_context</code>, <code>memory_stats</code>, and <code>memory_verify</code> to read, and <code>memory_remember</code> and <code>memory_forget</code> to write. <code>memory_context</code> returns the same token-budgeted pack as the CLI, and <code>memory_forget</code> removes a memory by id or query. It makes no network calls: the vault is opened in process.</p>
         <pre class="code"><code>{
   "mcpServers": {
     "keepsake": {

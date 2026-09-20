@@ -197,6 +197,25 @@ Ask about my grandmother's sourdough recipe.</textarea>
                   <p class="status" id="open-status" role="status" aria-live="polite">No vault opened.</p>
                 </div>
 
+                <div class="card">
+                  <h3>5 · Context pack</h3>
+                  <p class="muted">A task-scoped, token-budgeted Markdown projection of the cells. Built in memory and never written to disk.</p>
+                  <label class="field" for="context-task">Task</label>
+                  <input id="context-task" class="input" type="text" placeholder="what should the agent work on?" autocomplete="off">
+                  <label class="field" for="context-budget">Token budget</label>
+                  <input id="context-budget" class="input" type="number" value="1500" min="100" max="20000" step="100">
+                  <div class="btn-row">
+                    <button type="button" class="btn btn--primary" id="context-run">Build pack</button>
+                  </div>
+                  <div class="code code--wrap">
+                    <pre id="context-output"></pre>
+                  </div>
+                  <div class="btn-row">
+                    <button type="button" class="btn btn--outline btn--sm" id="context-copy" data-copy="" hidden>Copy</button>
+                  </div>
+                  <p class="status" id="context-status" role="status" aria-live="polite">Import something, then build a pack.</p>
+                </div>
+
               </div>
             </div>
 
@@ -244,6 +263,13 @@ Ask about my grandmother's sourdough recipe.</textarea>
                 </table>
               </div>
 
+              <label class="field" for="forget-query">Forget cells matching a query</label>
+              <input id="forget-query" class="input" type="search" style="min-height:0;padding:10px 14px" placeholder="staging database" autocomplete="off">
+              <div class="btn-row">
+                <button type="button" class="btn btn--outline" id="forget-run">Forget matching</button>
+              </div>
+              <p class="status" id="forget-status" role="status" aria-live="polite">No cells forgotten.</p>
+
               <h3>Stats</h3>
               <div class="table-wrap" id="stats-wrap" hidden>
                 <table>
@@ -269,7 +295,7 @@ Ask about my grandmother's sourdough recipe.</textarea>
       <div class="band reveal">
         <p class="band__label" id="how-title">How it works</p>
         <div class="band__body">
-          <p class="band__lead">Four steps, all on your machine. The vault is a file you can copy, back up, and hand to another tool.</p>
+          <p class="band__lead">Six steps, all on your machine. The vault is a file you can copy, back up, and hand to another tool.</p>
           <dl class="defgrid">
             <div>
               <dt>Import</dt>
@@ -278,6 +304,14 @@ Ask about my grandmother's sourdough recipe.</textarea>
             <div>
               <dt>Search</dt>
               <dd>Recall is exact and lexical over the plaintext you hold. Version 0.1 has no embeddings and no model inference.</dd>
+            </div>
+            <div>
+              <dt>Context pack</dt>
+              <dd>A task-scoped, token-budgeted Markdown projection of the matching cells. Built in memory for an agent and never written to disk.</dd>
+            </div>
+            <div>
+              <dt>Forget</dt>
+              <dd>Cells matching a query, tag, source, or id are dropped, and the vault is rewritten from what remains.</dd>
             </div>
             <div>
               <dt>Seal</dt>
@@ -596,6 +630,50 @@ Ask about my grandmother's sourdough recipe.</textarea>
     setStatus($("search-status"), label);
   }
 
+  function runContext() {
+    clearError();
+    if (state.cells.length === 0) {
+      setStatus($("context-status"), "Import at least one cell first.", "error");
+      return;
+    }
+    var task = $("context-task").value;
+    if (task.trim().length === 0) {
+      setStatus($("context-status"), "Enter a task to scope the pack.", "error");
+      return;
+    }
+    var budget = Number($("context-budget").value);
+    if (!isFinite(budget) || budget < 100) budget = 1500;
+    var pack = K.contextPack(state.cells, task, { budgetTokens: budget });
+    $("context-output").textContent = pack.text;
+    $("context-copy").setAttribute("data-copy", pack.text);
+    $("context-copy").hidden = false;
+    setStatus($("context-status"), "Built a pack of " + pack.cells.length + " cell(s), ~" + pack.tokens + " tokens.");
+  }
+
+  function runForget() {
+    clearError();
+    var query = $("forget-query").value;
+    if (query.trim().length === 0) {
+      setStatus($("forget-status"), "Type a query to forget matching cells.", "error");
+      return;
+    }
+    if (state.cells.length === 0) {
+      setStatus($("forget-status"), "There are no cells to forget.", "error");
+      return;
+    }
+    var result = K.forgetCells(state.cells, { query: query });
+    if (result.removed.length === 0) {
+      setStatus($("forget-status"), "No cells matched “" + query + "”.");
+      return;
+    }
+    state.cells = result.kept;
+    state.hits = [];
+    $("hits-empty").textContent = "No search run yet.";
+    renderAll();
+    if ($("search-query").value.trim().length > 0) runSearch();
+    setStatus($("forget-status"), "Forgot " + result.removed.length + " cell(s); " + state.cells.length + " remain.");
+  }
+
   function sealVault() {
     clearError();
     if (state.cells.length === 0) {
@@ -664,12 +742,20 @@ Ask about my grandmother's sourdough recipe.</textarea>
     setStatus($("import-status"), "No cells imported yet.");
     setStatus($("search-status"), "Import something, then search it.");
     $("hits-empty").textContent = "No search run yet.";
+    $("context-output").textContent = "";
+    $("context-copy").setAttribute("data-copy", "");
+    $("context-copy").hidden = true;
+    setStatus($("context-status"), "Import something, then build a pack.");
+    $("forget-query").value = "";
+    setStatus($("forget-status"), "No cells forgotten.");
     renderAll();
   });
   $("search-run").addEventListener("click", runSearch);
   $("search-query").addEventListener("input", runSearch);
   $("seal-run").addEventListener("click", sealVault);
   $("open-run").addEventListener("click", openVault);
+  $("context-run").addEventListener("click", runContext);
+  $("forget-run").addEventListener("click", runForget);
 
   renderAll();
 })();

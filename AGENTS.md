@@ -23,6 +23,7 @@ keepsake is an open, encrypted format for personal AI memory (`keepsake/v1`) plu
 - `spec/` — the normative `SPEC.md`, `keepsake-v1.schema.json`, and `vectors.json`.
 - `site/` — static pages and `site/assets/` (styles, self-hosted fonts, the generated browser bundle).
 - `scripts/` — `build-site.mjs` and `check-site.mjs`.
+- `action.yml` — composite GitHub Action that verifies a committed vault in CI (sets up Bun, runs `keepsake verify`).
 
 ## Conventions and hard rules
 
@@ -33,4 +34,4 @@ keepsake is an open, encrypted format for personal AI memory (`keepsake/v1`) plu
 - `site/assets/fonts/*.woff2` are self-hosted Geist (SIL Open Font License 1.1). Do not swap them for a CDN.
 - Every `site/*.html` must pass `bun run check:site`: exactly one `<h1>` and one `<main>`, a skip link whose `#fragment` matches an element id, and only classes defined in `lens.css` or `theme.css`.
 - The `keepsake/v1` format is stable. The Cell and Vault member sets, the canonical JSON rules, the Merkle rule, and the KDF/AEAD parameters do not change without a new format version.
-- The CLI contract is stable: exit codes `0` (ok), `1` (findings or a negative result), `2` (usage or parse error), `3` (I/O error).
+- The CLI contract is stable: the commands `import`, `search`, `export`, `verify`, `stats`, `mcp`, `merge`, `forget`, `rotate`, `diff`, and `context`, and exit codes `0` (ok), `1` (findings or a negative result), `2` (usage or parse error), `3` (I/O error). The MCP server exposes `memory_recall`, `memory_remember`, `memory_stats`, `memory_verify`, `memory_context`, and `memory_forget`; adding a tool is additive and does not change the vault format.

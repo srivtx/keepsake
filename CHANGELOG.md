@@ -6,6 +6,23 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-20
+
+### Added
+
+- Vault operations: `mergeCells`, `forgetCells`, `rotateVault`, and `diffVaults`.
+- `contextPack`, a token-budgeted Markdown projection of the vault for a task.
+- CLI commands `merge`, `forget`, `rotate`, `diff`, and `context`.
+- MCP tools `memory_context` and `memory_forget`.
+- Import parsers for Claude `conversations.json` exports and JSONL transcripts.
+- `action.yml`, a composite GitHub Action that verifies a committed vault in CI.
+- The browser app gains a context-pack card and an in-place forget control.
+
+### Fixed
+
+- The conformance page's "Run the vectors" button no longer throws, and the
+  error callout is hidden when every check passes.
+
 ## [0.1.0] - 2026-09-20
 
 ### Added
@@ -18,12 +35,13 @@ All notable changes to this project are documented here. The format is based on
 - `spec/vectors.json`, conformance vectors with real cell hashes, a Merkle root,
   and a fully formed example vault sealed with the passphrase
   `conformance-vector`.
-- The `keepsake` CLI: `import`, `search`, `seal`, `open`, `verify`, and `mcp`.
+- The `keepsake` CLI: `import`, `search`, `export`, `verify`, `stats`, and `mcp`.
 - The MCP server, which exposes a vault to any MCP-capable agent over stdio.
 - The browser app: import, browse, search, and seal a vault locally, with no
   network calls.
 - Import parsers that turn chat exports and notes into cells.
 - `install.sh`, a one-line installer for the `keepsake` binary.
 
-[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/srivtx/keepsake/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/srivtx/keepsake/releases/tag/v0.2.0
 [0.1.0]: https://github.com/srivtx/keepsake/releases/tag/v0.1.0

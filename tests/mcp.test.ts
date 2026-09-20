@@ -38,7 +38,7 @@ beforeAll(() => {
 });
 
 describe("keepsake mcp server", () => {
-  test("initializes and lists the four memory tools", async () => {
+  test("initializes and lists the memory tools", async () => {
     const responses = await session([
       '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1"}}}',
       '{"jsonrpc":"2.0","method":"notifications/initialized"}',
@@ -48,7 +48,25 @@ describe("keepsake mcp server", () => {
     expect((init?.["result"] as { serverInfo: { name: string } }).serverInfo.name).toBe("keepsake");
     const list = responses.find((r) => r["id"] === 2);
     const tools = (list?.["result"] as { tools: Array<{ name: string }> }).tools.map((t) => t.name);
-    expect(tools).toEqual(["memory_recall", "memory_remember", "memory_stats", "memory_verify"]);
+    expect(tools).toEqual([
+      "memory_recall",
+      "memory_remember",
+      "memory_context",
+      "memory_forget",
+      "memory_stats",
+      "memory_verify",
+    ]);
+  });
+
+  test("builds a context pack for a task", async () => {
+    const responses = await session([
+      '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1"}}}',
+      '{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"memory_context","arguments":{"task":"staging database","budgetTokens":500}}}',
+    ]);
+    const call = responses.find((r) => r["id"] === 5);
+    const content = (call?.["result"] as { content: Array<{ text: string }> }).content[0]?.text ?? "";
+    expect(content).toContain("# Memory context for: staging database");
+    expect(content).toContain("cart-staging");
   });
 
   test("recalls a stored memory", async () => {
